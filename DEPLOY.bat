@@ -21,7 +21,8 @@ git commit -m "feat: production-ready EDGE ESG Backend
 - Production deployment guides
 - RBI compliance features
 - Go 1.23 support
-- Docker and Kubernetes ready"
+- Docker and Kubernetes ready
+- Fix: Add ValidationFailed error code"
 
 echo.
 echo Pushing to GitHub...
