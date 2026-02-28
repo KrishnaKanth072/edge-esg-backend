@@ -21,6 +21,7 @@ build:
 	docker build -t edge/regulation-agent -f cmd/server/regulation-agent/Dockerfile .
 
 test:
+	go mod download
 	go test ./internal/... -cover -v
 
 deploy:
