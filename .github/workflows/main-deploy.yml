@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/edge
+  IMAGE_PREFIX: krishnakanth072/edge
 
 jobs:
   test:
