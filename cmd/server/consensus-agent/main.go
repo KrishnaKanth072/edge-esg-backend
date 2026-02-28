@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/zebbank/edge-esg-backend/internal/loggers"
+	"github.com/edgeesg/edge-esg-backend/internal/loggers"
 	"google.golang.org/grpc"
 )
 

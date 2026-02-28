@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/zebbank/edge-esg-backend/internal/models"
+	"github.com/edgeesg/edge-esg-backend/internal/models"
 	"gorm.io/gorm"
 )
 

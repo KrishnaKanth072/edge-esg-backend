@@ -7,7 +7,7 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-gonic/gin"
-	"github.com/zebbank/edge-esg-backend/internal/error_codes"
+	"github.com/edgeesg/edge-esg-backend/internal/error_codes"
 )
 
 type KeycloakMiddleware struct {

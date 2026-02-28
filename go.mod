@@ -1,4 +1,4 @@
-module github.com/zebbank/edge-esg-backend
+module github.com/edgeesg/edge-esg-backend
 
 go 1.23
 

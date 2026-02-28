@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zebbank/edge-esg-backend/internal/dtos"
+	"github.com/edgeesg/edge-esg-backend/internal/dtos"
 )
 
 var startTime = time.Now()

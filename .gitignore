@@ -19,10 +19,22 @@ go.work.sum
 # Dependency directories
 vendor/
 
-# Environment variables
+# Environment variables - NEVER COMMIT
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.development
+
+# Secrets and keys - CRITICAL
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+secrets/
+.secrets/
 
 # IDE
 .vscode/
@@ -61,3 +73,7 @@ bin/
 PUSH_*.bat
 FIX_*.bat
 GENERATE_*.bat
+
+# Database dumps
+*.sql.gz
+*.dump

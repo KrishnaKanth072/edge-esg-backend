@@ -1,20 +1,25 @@
 # EDGE ESG Backend - RBI Compliant Trading Platform
 
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://golang.org)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI/CD](https://github.com/KrishnaKanth072/edge-esg-backend/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/KrishnaKanth072/edge-esg-backend/actions)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://hub.docker.com)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5?style=flat&logo=kubernetes)](https://kubernetes.io)
+[![Security](https://img.shields.io/badge/Security-Hardened-green.svg)](SECURITY_SETUP_GUIDE.md)
 
 > Enterprise-grade ESG trading platform with RBI compliance, quantum computing integration, and blockchain-backed audit trails. Deploy for FREE on Oracle Cloud.
 
-## 🚀 Quick Start (2 Commands)
+## 🚀 Quick Start
 
 ```bash
-# 1. Deploy to GitHub
-bash DEPLOY_MY_CODE.sh
+# 1. Clone repository
+git clone https://github.com/KrishnaKanth072/edge-esg-backend.git
+cd edge-esg-backend
 
-# 2. Test locally
+# 2. Generate secure secrets
+bash scripts/generate-secrets.sh
+
+# 3. Start locally
 make up
 ```
 
@@ -31,6 +36,33 @@ Your repository: https://github.com/KrishnaKanth072/edge-esg-backend
 - **Audit Trail**: Blockchain-backed immutable logs
 - **Rate Limiting**: 10K req/min per bank
 - **Data Masking**: Role-based PII protection
+- **Security Headers**: XSS, Clickjacking, MIME-sniffing protection
+- **Input Validation**: SQL injection & XSS prevention
+- **TLS/HTTPS**: Enforced in production
+- **Security Logging**: All auth attempts and data access logged
+
+## 🔒 Security Setup
+
+**CRITICAL: Before deploying to production:**
+
+```bash
+# 1. Generate secure secrets
+bash scripts/generate-secrets.sh
+
+# 2. Run security check
+bash scripts/security-check.sh
+
+# 3. Follow security setup guide
+cat SECURITY_SETUP_GUIDE.md
+```
+
+**Never commit:**
+- `.env` files
+- Encryption keys
+- Passwords
+- TLS certificates
+
+See [SECURITY_SETUP_GUIDE.md](SECURITY_SETUP_GUIDE.md) for complete instructions.
 
 ## 🚀 Quick Start
 ```bash
@@ -127,9 +159,9 @@ Dev   Staging  Production
 | Environment | Branch | URL | Auto-Deploy | Replicas |
 |-------------|--------|-----|-------------|----------|
 | **Local** | any | localhost:8000 | No | 1 |
-| **Dev** | dev | dev.edge.zebbank.com | ✅ Yes | 1 |
-| **Staging** | main | staging.edge.zebbank.com | ✅ Yes | 2-3 |
-| **Production** | v* tags | edge.zebbank.com | ⚠️ Manual | 3-20 |
+| **Dev** | dev | dev.edge.yourdomain.com | ✅ Yes | 1 |
+| **Staging** | main | staging.edge.yourdomain.com | ✅ Yes | 2-3 |
+| **Production** | v* tags | edge.yourdomain.com | ⚠️ Manual | 3-20 |
 
 ### Quick Start with GitHub
 

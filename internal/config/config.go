@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -13,19 +14,39 @@ type Config struct {
 	KeycloakRealm string
 	ServerPort    string
 	EncryptionKey string
+	Environment   string
+	TLSEnabled    bool
+	TLSCertFile   string
+	TLSKeyFile    string
 }
 
-func Load() *Config {
+func Load() (*Config, error) {
 	godotenv.Load()
 
-	return &Config{
-		DatabaseURL:   getEnv("DATABASE_URL", "postgres://edge_admin:edge_secure_2024@localhost:5432/edge_esg"),
-		RedisURL:      getEnv("REDIS_URL", "redis://:edge_redis_2024@localhost:6379/0"),
-		KeycloakURL:   getEnv("KEYCLOAK_URL", "http://localhost:8080"),
-		KeycloakRealm: getEnv("KEYCLOAK_REALM", "zebbank"),
+	config := &Config{
+		DatabaseURL:   getEnvRequired("DATABASE_URL"),
+		RedisURL:      getEnvRequired("REDIS_URL"),
+		KeycloakURL:   getEnvRequired("KEYCLOAK_URL"),
+		KeycloakRealm: getEnvRequired("KEYCLOAK_REALM"),
 		ServerPort:    getEnv("SERVER_PORT", "8000"),
-		EncryptionKey: getEnv("ENCRYPTION_KEY", "zebbank-edge-2024-aes256-secret-key"),
+		EncryptionKey: getEnvRequired("ENCRYPTION_KEY"),
+		Environment:   getEnv("ENVIRONMENT", "development"),
+		TLSEnabled:    getEnv("TLS_ENABLED", "false") == "true",
+		TLSCertFile:   getEnv("TLS_CERT_FILE", ""),
+		TLSKeyFile:    getEnv("TLS_KEY_FILE", ""),
 	}
+
+	// Validate encryption key length
+	if len(config.EncryptionKey) != 64 {
+		return nil, fmt.Errorf("ENCRYPTION_KEY must be 64 hex characters (32 bytes)")
+	}
+
+	// Enforce TLS in production
+	if config.Environment == "production" && !config.TLSEnabled {
+		return nil, fmt.Errorf("TLS must be enabled in production environment")
+	}
+
+	return config, nil
 }
 
 func getEnv(key, fallback string) string {
@@ -33,4 +54,12 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func getEnvRequired(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		panic(fmt.Sprintf("Required environment variable %s is not set", key))
+	}
+	return value
 }

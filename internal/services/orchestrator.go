@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zebbank/edge-esg-backend/internal/dtos"
-	"github.com/zebbank/edge-esg-backend/internal/types"
+	"github.com/edgeesg/edge-esg-backend/internal/dtos"
+	"github.com/edgeesg/edge-esg-backend/internal/types"
 )
 
 type Orchestrator struct {

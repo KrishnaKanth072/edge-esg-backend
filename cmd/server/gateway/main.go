@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zebbank/edge-esg-backend/internal/config"
-	"github.com/zebbank/edge-esg-backend/internal/handlers"
-	"github.com/zebbank/edge-esg-backend/internal/loggers"
-	"github.com/zebbank/edge-esg-backend/internal/middleware"
-	"github.com/zebbank/edge-esg-backend/internal/services"
-	"github.com/zebbank/edge-esg-backend/pkg/database"
+	"github.com/edgeesg/edge-esg-backend/internal/config"
+	"github.com/edgeesg/edge-esg-backend/internal/handlers"
+	"github.com/edgeesg/edge-esg-backend/internal/loggers"
+	"github.com/edgeesg/edge-esg-backend/internal/middleware"
+	"github.com/edgeesg/edge-esg-backend/internal/services"
+	"github.com/edgeesg/edge-esg-backend/pkg/database"
 )
 
 func main() {
