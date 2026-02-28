@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: krishnakanth072/edge
+  IMAGE_PREFIX: krishnakanth072/edge-esg-backend
 
 jobs:
   test:
