@@ -20,11 +20,31 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
       
-      - name: Auto-merge patch and minor updates
-        if: |
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      - name: Auto-merge security updates immediately
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' && contains(github.event.pull_request.labels.*.name, 'security')
         run: |
+          echo "🔒 Security update detected - auto-merging immediately"
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Auto-merge patch updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' && !contains(github.event.pull_request.labels.*.name, 'security')
+        run: |
+          echo "🔧 Patch update detected - auto-merging"
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Auto-merge minor updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          echo "📦 Minor update detected - auto-merging"
+          gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
@@ -33,7 +53,16 @@ jobs:
       - name: Comment on major updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-major'
         run: |
-          gh pr comment "$PR_URL" --body "⚠️ This is a MAJOR version update. Please review carefully before merging."
+          gh pr comment "$PR_URL" --body "⚠️ **MAJOR VERSION UPDATE**
+          
+          This is a major version update that may contain breaking changes.
+          
+          **Action Required:**
+          1. Review the changelog
+          2. Test thoroughly
+          3. Manually approve and merge
+          
+          **Do NOT auto-merge this PR.**"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

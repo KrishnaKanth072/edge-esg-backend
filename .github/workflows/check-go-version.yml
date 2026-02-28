@@ -1,0 +1,71 @@
+name: Check Go Version Consistency
+
+on:
+  pull_request:
+    paths:
+      - 'go.mod'
+      - '.go-version'
+      - '**/Dockerfile'
+      - '.github/workflows/*.yml'
+  push:
+    branches: [main, dev]
+
+jobs:
+  check-version:
+    name: Verify Go Version Consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check Go version consistency
+        run: |
+          # Read expected version from .go-version
+          EXPECTED_VERSION=$(cat .go-version)
+          echo "Expected Go version: $EXPECTED_VERSION"
+          
+          # Check go.mod
+          GO_MOD_VERSION=$(grep "^go " go.mod | awk '{print $2}')
+          echo "go.mod version: $GO_MOD_VERSION"
+          
+          # Check Dockerfiles
+          echo "Checking Dockerfiles..."
+          DOCKERFILE_VERSIONS=$(find cmd/server -name "Dockerfile" -exec grep -h "FROM golang:" {} \; | sort -u)
+          echo "$DOCKERFILE_VERSIONS"
+          
+          # Check GitHub Actions
+          echo "Checking GitHub Actions workflows..."
+          WORKFLOW_VERSIONS=$(find .github/workflows -name "*.yml" -exec grep -h "go-version:" {} \; | grep -v "#" | sort -u || true)
+          echo "$WORKFLOW_VERSIONS"
+          
+          # Validate go.mod
+          if [ "$GO_MOD_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "❌ ERROR: go.mod has version $GO_MOD_VERSION but expected $EXPECTED_VERSION"
+            exit 1
+          fi
+          
+          # Validate Dockerfiles
+          INCORRECT_DOCKERFILES=$(find cmd/server -name "Dockerfile" -exec grep -L "FROM golang:$EXPECTED_VERSION-alpine" {} \;)
+          if [ -n "$INCORRECT_DOCKERFILES" ]; then
+            echo "❌ ERROR: These Dockerfiles don't use Go $EXPECTED_VERSION:"
+            echo "$INCORRECT_DOCKERFILES"
+            exit 1
+          fi
+          
+          # Validate GitHub Actions
+          INCORRECT_WORKFLOWS=$(find .github/workflows -name "*.yml" -exec grep -l "go-version:" {} \; | xargs grep -L "go-version: '$EXPECTED_VERSION'" || true)
+          if [ -n "$INCORRECT_WORKFLOWS" ]; then
+            echo "⚠️  WARNING: These workflows might not use Go $EXPECTED_VERSION:"
+            echo "$INCORRECT_WORKFLOWS"
+            echo "This is not critical if they use 'go-version: \${{ matrix.go-version }}' or similar"
+          fi
+          
+          echo "✅ All Go versions are consistent: $EXPECTED_VERSION"
+      
+      - name: Suggest fix if failed
+        if: failure()
+        run: |
+          echo ""
+          echo "💡 To fix version mismatches, run:"
+          echo "   ./scripts/update-go-version.sh"
+          echo ""
+          echo "Or manually update .go-version and run the script"
