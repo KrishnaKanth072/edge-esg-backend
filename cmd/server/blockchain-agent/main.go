@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/zebbank/edge-esg-backend/internal/loggers"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc" 
 )
 
 func main() {

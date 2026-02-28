@@ -1,0 +1,40 @@
+name: Require Admin Approval
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-approval:
+    name: Check Admin Approval
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if PR is from admin or approved by admin
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prAuthor = context.payload.pull_request.user.login;
+            
+            // If PR is created by admin, auto-approve
+            if (prAuthor === 'KrishnaKanth072') {
+              console.log('✅ PR created by admin - auto-approved');
+              return;
+            }
+            
+            // Otherwise, check for admin approval
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            
+            const adminApproved = reviews.some(review => 
+              review.user.login === 'KrishnaKanth072' && 
+              review.state === 'APPROVED'
+            );
+            
+            if (!adminApproved) {
+              core.setFailed('❌ Admin approval required from @KrishnaKanth072');
+            } else {
+              console.log('✅ Admin approval found');
+            }
