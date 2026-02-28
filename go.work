@@ -1,0 +1,15 @@
+go 1.21
+
+use (
+	.
+	./cmd/server/gateway
+	./cmd/server/risk-agent
+	./cmd/server/trading-agent
+	./cmd/server/quantum-agent
+	./cmd/server/compliance-agent
+	./cmd/server/consensus-agent
+	./cmd/server/blockchain-agent
+	./cmd/server/digital-twin-agent
+	./cmd/server/optimization-agent
+	./cmd/server/regulation-agent
+)

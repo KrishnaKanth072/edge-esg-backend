@@ -1,0 +1,217 @@
+version: '3.8'
+
+# Optimized for Oracle Cloud ARM64 (4 CPU, 24GB RAM)
+services:
+  postgres:
+    image: postgres:16-alpine
+    platform: linux/arm64
+    environment:
+      POSTGRES_DB: edge_esg
+      POSTGRES_USER: edge_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edge_secure_2024}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./internal/migrations:/docker-entrypoint-initdb.d
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    platform: linux/arm64
+    command: redis-server --requirepass ${REDIS_PASSWORD:-edge_redis_2024}
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    platform: linux/arm64
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD:-admin}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/edge_esg
+      KC_DB_USERNAME: edge_admin
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-edge_secure_2024}
+      KC_HOSTNAME: ${DOMAIN:-localhost}
+      KC_HTTP_ENABLED: true
+    ports:
+      - "8080:8080"
+    command: start-dev
+    depends_on:
+      - postgres
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: cmd/server/gateway/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://edge_admin:${POSTGRES_PASSWORD:-edge_secure_2024}@postgres:5432/edge_esg
+      REDIS_URL: redis://:${REDIS_PASSWORD:-edge_redis_2024}@redis:6379/0
+      KEYCLOAK_URL: http://keycloak:8080
+      SERVER_PORT: "8000"
+    depends_on:
+      - postgres
+      - redis
+      - keycloak
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+    restart: unless-stopped
+
+  risk-agent:
+    build:
+      context: .
+      dockerfile: cmd/server/risk-agent/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "50051:50051"
+    environment:
+      DATABASE_URL: postgres://edge_admin:${POSTGRES_PASSWORD:-edge_secure_2024}@postgres:5432/edge_esg
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+
+  trading-agent:
+    build:
+      context: .
+      dockerfile: cmd/server/trading-agent/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "50052:50052"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+
+  quantum-agent:
+    build:
+      context: .
+      dockerfile: cmd/server/quantum-agent/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "50053:50053"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+
+  compliance-agent:
+    build:
+      context: .
+      dockerfile: cmd/server/compliance-agent/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "50054:50054"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+
+  consensus-agent:
+    build:
+      context: .
+      dockerfile: cmd/server/consensus-agent/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "50055:50055"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+
+  blockchain-agent:
+    build:
+      context: .
+      dockerfile: cmd/server/blockchain-agent/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "50056:50056"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+
+  digital-twin-agent:
+    build:
+      context: .
+      dockerfile: cmd/server/digital-twin-agent/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "50057:50057"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+
+  optimization-agent:
+    build:
+      context: .
+      dockerfile: cmd/server/optimization-agent/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "50058:50058"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+
+  regulation-agent:
+    build:
+      context: .
+      dockerfile: cmd/server/regulation-agent/Dockerfile
+    platform: linux/arm64
+    ports:
+      - "50059:50059"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+# Total resource usage:
+# CPU: ~4 cores (fits perfectly in Oracle Free tier)
+# RAM: ~10GB (well within 24GB limit)

@@ -1,0 +1,69 @@
+name: Deploy to Dev Environment
+
+on:
+  push:
+    branches: [dev]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/edge
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      
+      - name: Run tests
+        run: make test
+
+  build-and-deploy-dev:
+    name: Build & Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: test
+    environment: 
+      name: dev
+      url: https://dev.edge.zebbank.com
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and push all services
+        run: |
+          for service in gateway risk-agent trading-agent quantum-agent compliance-agent consensus-agent blockchain-agent digital-twin-agent optimization-agent regulation-agent; do
+            docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${service}:dev-${{ github.sha }} -f cmd/server/${service}/Dockerfile .
+            docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${service}:dev-${{ github.sha }} ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${service}:dev-latest
+            docker push ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${service}:dev-${{ github.sha }}
+            docker push ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${service}:dev-latest
+          done
+      
+      - name: Deploy to Dev Kubernetes
+        run: |
+          echo "${{ secrets.KUBECONFIG_DEV }}" > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl apply -f deploy/k3s/namespace.yaml
+          kubectl apply -f deploy/environments/dev/
+          kubectl set image deployment/gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/gateway:dev-${{ github.sha }} -n edge-dev
+          kubectl rollout status deployment/gateway -n edge-dev --timeout=5m
+      
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '✅' || '❌' }} Dev deployment ${{ job.status }} - ${{ github.sha }}"
+            }

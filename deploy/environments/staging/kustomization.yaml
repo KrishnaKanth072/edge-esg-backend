@@ -1,0 +1,46 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: edge-staging
+
+resources:
+  - ../../k3s/namespace.yaml
+  - ../../k3s/gateway-deployment.yaml
+  - ../../k3s/agents-deployment.yaml
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+    target:
+      kind: Deployment
+      name: gateway
+  
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+    target:
+      kind: Deployment
+      name: risk-agent
+  
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+    target:
+      kind: Deployment
+      name: trading-agent
+
+configMapGenerator:
+  - name: edge-config
+    literals:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=info
+
+secretGenerator:
+  - name: edge-secrets
+    literals:
+      - database-url=postgres://edge_admin:staging_password@postgres:5432/edge_esg_staging
+      - redis-url=redis://:staging_password@redis:6379/1

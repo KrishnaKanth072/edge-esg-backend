@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package esg;
+
+option go_package = "github.com/zebbank/edge-esg-backend/proto";
+
+service ESGService {
+  rpc AnalyzeCompany(AnalyzeRequest) returns (AnalyzeResponse);
+  rpc GetRiskScore(RiskRequest) returns (RiskResponse);
+  rpc GetTradingSignal(TradingRequest) returns (TradingResponse);
+}
+
+message AnalyzeRequest {
+  string company_name = 1;
+  string bank_id = 2;
+  string mode = 3; // auto/manual
+}
+
+message AnalyzeResponse {
+  string esg_score = 1;
+  string risk_action = 2;
+  TradingSignal trading_signal = 3;
+  string audit_hash = 4;
+  int64 processing_time_ms = 5;
+}
+
+message TradingSignal {
+  string action = 1; // BUY/SELL/HOLD
+  string symbol = 2;
+  string target_price = 3;
+  double confidence = 4;
+}
+
+message RiskRequest {
+  string company_name = 1;
+  double carbon_emissions = 2;
+  double water_usage = 3;
+}
+
+message RiskResponse {
+  double esg_score = 1;
+  string risk_level = 2; // LOW/MEDIUM/HIGH/CRITICAL
+  string action = 3; // APPROVE/REJECT
+}
+
+message TradingRequest {
+  string company_name = 1;
+  double esg_score = 2;
+}
+
+message TradingResponse {
+  string action = 1;
+  string symbol = 2;
+  double target_price = 3;
+  double confidence = 4;
+}

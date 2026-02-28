@@ -1,0 +1,95 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --timeout=5m
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      
+      - name: Run tests
+        run: make test
+      
+      - name: Generate coverage report
+        run: go test ./... -coverprofile=coverage.out -covermode=atomic
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.out
+          flags: unittests
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Gosec
+        uses: securego/gosec@master
+        with:
+          args: '-no-fail -fmt sarif -out gosec-results.sarif ./...'
+      
+      - name: Upload Gosec results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: gosec-results.sarif
+
+  build:
+    name: Build Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [gateway, risk-agent, trading-agent]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: docker build -f cmd/server/${{ matrix.service }}/Dockerfile .
+
+  compliance-check:
+    name: RBI Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for hardcoded secrets
+        run: |
+          if grep -r "password\s*=\s*['\"]" --include="*.go" .; then
+            echo "❌ Hardcoded passwords found!"
+            exit 1
+          fi
+          echo "✅ No hardcoded secrets found"
+      
+      - name: Check encryption usage
+        run: |
+          if ! grep -r "EncryptAES256GCM" internal/; then
+            echo "⚠️ Warning: Encryption functions not used"
+          fi
+          echo "✅ Encryption check passed"

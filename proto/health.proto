@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package health;
+
+option go_package = "github.com/zebbank/edge-esg-backend/proto";
+
+service HealthService {
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  string status = 1; // SERVING/NOT_SERVING
+  string version = 2;
+  int64 uptime_seconds = 3;
+}

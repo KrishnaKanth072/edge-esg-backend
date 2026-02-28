@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-agent
+  namespace: edge-production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: risk-agent
+  template:
+    metadata:
+      labels:
+        app: risk-agent
+    spec:
+      containers:
+      - name: risk-agent
+        image: ghcr.io/zebbank/edge/risk-agent:latest
+        ports:
+        - containerPort: 50051
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-agent
+  namespace: edge-production
+spec:
+  selector:
+    app: risk-agent
+  ports:
+  - protocol: TCP
+    port: 50051
+    targetPort: 50051
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trading-agent
+  namespace: edge-production
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: trading-agent
+  template:
+    metadata:
+      labels:
+        app: trading-agent
+    spec:
+      containers:
+      - name: trading-agent
+        image: ghcr.io/zebbank/edge/trading-agent:latest
+        ports:
+        - containerPort: 50052
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trading-agent
+  namespace: edge-production
+spec:
+  selector:
+    app: trading-agent
+  ports:
+  - protocol: TCP
+    port: 50052
+    targetPort: 50052
