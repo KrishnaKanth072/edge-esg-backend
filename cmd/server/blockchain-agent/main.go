@@ -5,12 +5,13 @@ import (
 	"net"
 
 	"github.com/edgeesg/edge-esg-backend/internal/loggers"
-	"google.golang.org/grpc" 
+	"google.golang.org/grpc"
 )
 
 func main() {
 	loggers.Init()
-	lis, err := net.Listen("tcp", ":50056")
+	// #nosec G102 -- Binding to all interfaces is required for Docker/Kubernetes networking
+	lis, err := net.Listen("tcp", "0.0.0.0:50056")
 	if err != nil {
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}
