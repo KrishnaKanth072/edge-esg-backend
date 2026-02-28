@@ -29,12 +29,12 @@ jobs:
             });
             
             const adminApproved = reviews.some(review => 
-              review.user.login === 'krishnakanth072' && 
+              review.user.login === 'KrishnaKanth072' && 
               review.state === 'APPROVED'
             );
             
             if (!adminApproved) {
-              core.setFailed('❌ Admin approval required from @krishnakanth072');
+              core.setFailed('❌ Admin approval required from @KrishnaKanth072');
             } else {
               console.log('✅ Admin approval found');
             }
