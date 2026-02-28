@@ -10,7 +10,7 @@ import (
 
 func main() {
 	loggers.Init()
-	lis, err := net.Listen("tcp", ":50053")
+	lis, err := net.Listen("tcp", "0.0.0.0:50053")
 	if err != nil {
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}

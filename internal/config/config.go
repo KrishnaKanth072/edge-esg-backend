@@ -21,7 +21,7 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	godotenv.Load()
+	_ = godotenv.Load() // Ignore error if .env file doesn't exist
 
 	config := &Config{
 		DatabaseURL:   getEnvRequired("DATABASE_URL"),
