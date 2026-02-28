@@ -1,3 +1,2 @@
+# Go dependencies checksums
 # This file will be auto-generated when you run: go mod tidy
-# Run this command before building:
-# go mod download && go mod tidy
