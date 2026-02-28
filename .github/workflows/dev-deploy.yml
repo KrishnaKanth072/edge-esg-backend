@@ -54,9 +54,11 @@ jobs:
       
       - name: Deploy to Dev Kubernetes
         continue-on-error: true
+        env:
+          KUBECONFIG_SECRET: ${{ secrets.KUBECONFIG_DEV }}
         run: |
-          if [ -n "${{ secrets.KUBECONFIG_DEV }}" ]; then
-            echo "${{ secrets.KUBECONFIG_DEV }}" > kubeconfig
+          if [ -n "$KUBECONFIG_SECRET" ]; then
+            echo "$KUBECONFIG_SECRET" > kubeconfig
             export KUBECONFIG=kubeconfig
             kubectl apply -f deploy/k3s/namespace.yaml
             kubectl apply -f deploy/environments/dev/

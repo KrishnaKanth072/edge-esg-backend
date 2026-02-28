@@ -47,9 +47,11 @@ jobs:
       
       - name: Deploy to Production Kubernetes
         continue-on-error: true
+        env:
+          KUBECONFIG_SECRET: ${{ secrets.KUBECONFIG_PROD }}
         run: |
-          if [ -n "${{ secrets.KUBECONFIG_PROD }}" ]; then
-            echo "${{ secrets.KUBECONFIG_PROD }}" > kubeconfig
+          if [ -n "$KUBECONFIG_SECRET" ]; then
+            echo "$KUBECONFIG_SECRET" > kubeconfig
             export KUBECONFIG=kubeconfig
             kubectl get deployment -n edge-production -o yaml > backup-$(date +%Y%m%d-%H%M%S).yaml || true
             VERSION=${{ github.event.release.tag_name || github.event.inputs.version }}

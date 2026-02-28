@@ -66,9 +66,11 @@ jobs:
       
       - name: Deploy to Staging Kubernetes
         continue-on-error: true
+        env:
+          KUBECONFIG_SECRET: ${{ secrets.KUBECONFIG_STAGING }}
         run: |
-          if [ -n "${{ secrets.KUBECONFIG_STAGING }}" ]; then
-            echo "${{ secrets.KUBECONFIG_STAGING }}" > kubeconfig
+          if [ -n "$KUBECONFIG_SECRET" ]; then
+            echo "$KUBECONFIG_SECRET" > kubeconfig
             export KUBECONFIG=kubeconfig
             kubectl apply -f deploy/k3s/namespace.yaml
             kubectl apply -f deploy/environments/staging/
