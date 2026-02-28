@@ -2,11 +2,13 @@ name: Require Admin Approval
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited]
+  pull_request_review:
+    types: [submitted, dismissed]
 
 jobs:
   check-approval:
-    name: Check Admin Approval
+    name: Admin Approval Required
     runs-on: ubuntu-latest
     steps:
       - name: Check if PR is from admin or approved by admin
@@ -15,13 +17,15 @@ jobs:
           script: |
             const prAuthor = context.payload.pull_request.user.login.toLowerCase();
             
-            // If PR is created by admin, auto-approve
+            // If PR is created by admin, auto-approve immediately
             if (prAuthor === 'krishnakanth072') {
               console.log('✅ PR created by admin - auto-approved');
+              core.notice('✅ Admin PR - No approval needed');
               return;
             }
             
-            // Otherwise, check for admin approval
+            // For non-admin PRs, check for admin approval
+            console.log('⏳ Checking for admin approval...');
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -34,7 +38,9 @@ jobs:
             );
             
             if (!adminApproved) {
-              core.setFailed('❌ Admin approval required from @krishnakanth072');
+              core.setFailed('❌ This PR requires approval from @krishnakanth072 before merging');
+              core.notice('⚠️ Waiting for admin approval');
             } else {
               console.log('✅ Admin approval found');
+              core.notice('✅ Approved by admin');
             }

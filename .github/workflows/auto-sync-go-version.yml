@@ -1,0 +1,70 @@
+name: Auto-Sync Go Version
+
+on:
+  push:
+    paths:
+      - '.go-version'
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync-go-version:
+    name: Sync Go Version Across All Files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Read Go version
+        id: go-version
+        run: |
+          GO_VERSION=$(cat .go-version)
+          echo "version=$GO_VERSION" >> $GITHUB_OUTPUT
+          echo "📌 Go version: $GO_VERSION"
+      
+      - name: Update go.mod
+        run: |
+          sed -i "s/^go [0-9.]\+$/go ${{ steps.go-version.outputs.version }}/" go.mod
+          echo "✅ Updated go.mod"
+      
+      - name: Update all Dockerfiles
+        run: |
+          find cmd/server -name "Dockerfile" -type f -exec sed -i "s/golang:[0-9.]\+-alpine/golang:${{ steps.go-version.outputs.version }}-alpine/" {} \;
+          echo "✅ Updated all Dockerfiles"
+      
+      - name: Update docker-compose.yml
+        run: |
+          if grep -q "golang:" docker-compose.yml 2>/dev/null; then
+            sed -i "s/golang:[0-9.]\+-alpine/golang:${{ steps.go-version.outputs.version }}-alpine/" docker-compose.yml
+            echo "✅ Updated docker-compose.yml"
+          fi
+      
+      - name: Update GitHub Actions workflows
+        run: |
+          find .github/workflows -name "*.yml" -type f -exec sed -i "s/go-version: '[0-9.]\+'/go-version: '${{ steps.go-version.outputs.version }}'/" {} \;
+          echo "✅ Updated all workflows"
+      
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No changes needed - all files already in sync"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📝 Changes detected - will commit"
+          fi
+      
+      - name: Commit and push changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          git commit -m "chore: auto-sync Go version to ${{ steps.go-version.outputs.version }} across all files"
+          git push
+          echo "✅ Changes committed and pushed"

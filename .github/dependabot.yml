@@ -4,10 +4,9 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily" # Check daily for security updates
       time: "09:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 15
     reviewers:
       - "krishnakanth072"
     labels:
@@ -19,19 +18,26 @@ updates:
     # Auto-merge minor and patch updates
     allow:
       - dependency-type: "all"
-    # Group updates
+    # Group updates by type
     groups:
+      # Security updates - highest priority, separate PRs
       security-updates:
         patterns:
           - "*"
         update-types:
           - "security"
+      # Patch updates - safe, can be grouped
+      patch-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      # Minor updates - grouped together
       minor-updates:
         patterns:
           - "*"
         update-types:
           - "minor"
-          - "patch"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
