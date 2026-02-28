@@ -55,10 +55,24 @@ services:
       DATABASE_URL: postgres://edge_admin:edge_secure_2024@postgres:5432/edge_esg
       REDIS_URL: redis://:edge_redis_2024@redis:6379/0
       KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: edgeesg
+      SERVER_PORT: "8000"
+      ENVIRONMENT: development
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
     depends_on:
-      - postgres
-      - redis
-      - keycloak
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
   risk-agent:
     build:

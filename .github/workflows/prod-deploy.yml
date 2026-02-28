@@ -46,12 +46,14 @@ jobs:
           done
       
       - name: Create backup of current deployment
+        if: ${{ secrets.KUBECONFIG_PROD != '' }}
         run: |
           echo "${{ secrets.KUBECONFIG_PROD }}" > kubeconfig
           export KUBECONFIG=kubeconfig
           kubectl get deployment -n edge-production -o yaml > backup-$(date +%Y%m%d-%H%M%S).yaml
       
       - name: Deploy to Production Kubernetes
+        if: ${{ secrets.KUBECONFIG_PROD != '' }}
         run: |
           export KUBECONFIG=kubeconfig
           VERSION=${{ github.event.release.tag_name || github.event.inputs.version }}
@@ -60,14 +62,21 @@ jobs:
           kubectl set image deployment/gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/gateway:${VERSION} -n edge-production
           kubectl rollout status deployment/gateway -n edge-production --timeout=10m
       
+      - name: Deployment Skipped
+        if: ${{ secrets.KUBECONFIG_PROD == '' }}
+        run: |
+          echo "⚠️ Kubernetes deployment skipped - KUBECONFIG_PROD secret not configured"
+          echo "Docker images have been built and pushed to GHCR successfully"
+      
       - name: Run production smoke tests
+        if: ${{ secrets.KUBECONFIG_PROD != '' }}
         run: |
           sleep 60
           curl -f https://edge.yourdomain.com/health || exit 1
           # Add more critical endpoint checks
       
       - name: Rollback on failure
-        if: failure()
+        if: failure() && secrets.KUBECONFIG_PROD != ''
         run: |
           export KUBECONFIG=kubeconfig
           kubectl rollout undo deployment/gateway -n edge-production
