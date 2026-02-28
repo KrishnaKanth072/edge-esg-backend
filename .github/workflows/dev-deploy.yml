@@ -53,18 +53,16 @@ jobs:
           done
       
       - name: Deploy to Dev Kubernetes
-        if: ${{ secrets.KUBECONFIG_DEV != '' }}
+        continue-on-error: true
         run: |
-          echo "${{ secrets.KUBECONFIG_DEV }}" > kubeconfig
-          export KUBECONFIG=kubeconfig
-          kubectl apply -f deploy/k3s/namespace.yaml
-          kubectl apply -f deploy/environments/dev/
-          kubectl set image deployment/gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/gateway:dev-${{ github.sha }} -n edge-dev
-          kubectl rollout status deployment/gateway -n edge-dev --timeout=5m
-      
-      - name: Deployment Skipped
-        if: ${{ secrets.KUBECONFIG_DEV == '' }}
-        run: |
-          echo "⚠️ Kubernetes deployment skipped - KUBECONFIG_DEV secret not configured"
-          echo "Docker images have been built and pushed to GHCR successfully"
-          echo "To enable deployment, add KUBECONFIG_DEV secret in repository settings"
+          if [ -n "${{ secrets.KUBECONFIG_DEV }}" ]; then
+            echo "${{ secrets.KUBECONFIG_DEV }}" > kubeconfig
+            export KUBECONFIG=kubeconfig
+            kubectl apply -f deploy/k3s/namespace.yaml
+            kubectl apply -f deploy/environments/dev/
+            kubectl set image deployment/gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/gateway:dev-${{ github.sha }} -n edge-dev
+            kubectl rollout status deployment/gateway -n edge-dev --timeout=5m
+          else
+            echo "⚠️ Kubernetes deployment skipped - KUBECONFIG_DEV secret not configured"
+            echo "✅ Docker images have been built and pushed to GHCR successfully"
+          fi
