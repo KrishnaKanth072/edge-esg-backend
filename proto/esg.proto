@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package esg;
 
-option go_package = "github.com/zebbank/edge-esg-backend/proto";
+option go_package = "github.com/edgeesg/edge-esg-backend/proto";
 
 service ESGService {
   rpc AnalyzeCompany(AnalyzeRequest) returns (AnalyzeResponse);

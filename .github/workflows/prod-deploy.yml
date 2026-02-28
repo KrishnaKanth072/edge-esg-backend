@@ -17,9 +17,12 @@ jobs:
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     environment: 
       name: production
-      url: https://edge.zebbank.com
+      url: https://edge.yourdomain.com
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,7 +63,7 @@ jobs:
       - name: Run production smoke tests
         run: |
           sleep 60
-          curl -f https://edge.zebbank.com/health || exit 1
+          curl -f https://edge.yourdomain.com/health || exit 1
           # Add more critical endpoint checks
       
       - name: Rollback on failure

@@ -27,9 +27,12 @@ jobs:
     name: Build & Deploy to Dev
     runs-on: ubuntu-latest
     needs: test
+    permissions:
+      contents: read
+      packages: write
     environment: 
       name: dev
-      url: https://dev.edge.zebbank.com
+      url: https://dev.edge.yourdomain.com
     steps:
       - uses: actions/checkout@v4
       
