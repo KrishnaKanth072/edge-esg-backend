@@ -10,7 +10,8 @@ import (
 
 func main() {
 	loggers.Init()
-	lis, err := net.Listen("tcp", ":50055")
+	// #nosec G102 -- Binding to all interfaces is required for Docker/Kubernetes networking
+	lis, err := net.Listen("tcp", "0.0.0.0:50055")
 	if err != nil {
 		panic(fmt.Sprintf("Failed to listen: %v", err))
 	}

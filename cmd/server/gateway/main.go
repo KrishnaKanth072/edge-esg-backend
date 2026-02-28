@@ -57,5 +57,7 @@ func main() {
 		"db":   db != nil,
 	})
 
-	r.Run(":" + cfg.ServerPort)
+	if err := r.Run(":" + cfg.ServerPort); err != nil {
+		panic(fmt.Sprintf("Failed to start server: %v", err))
+	}
 }
