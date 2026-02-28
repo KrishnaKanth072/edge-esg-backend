@@ -115,12 +115,3 @@ jobs:
           kubectl config use-context prod
           kubectl apply -f deploy/k3s/
           kubectl rollout restart deployment -n edge-production
-      
-      - name: Notify Slack
-        uses: slackapi/slack-github-action@v1
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
-          payload: |
-            {
-              "text": "✅ EDGE ESG Backend deployed to production - ${{ github.sha }}"
-            }
