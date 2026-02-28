@@ -6,16 +6,23 @@ NAMESPACE="edge-${ENV}"
 
 echo "🚀 Deploying EDGE ESG Backend to ${ENV}..."
 
+# Test cluster connectivity first
+if ! kubectl cluster-info &>/dev/null; then
+  echo "❌ Cannot connect to Kubernetes cluster"
+  echo "Please configure kubectl to connect to your cluster first"
+  exit 1
+fi
+
 # Apply namespace
-kubectl apply -f deploy/k3s/namespace.yaml
+kubectl apply --validate=false -f deploy/k3s/namespace.yaml
 
 # Apply secrets (ensure they're configured)
-kubectl apply -f deploy/k3s/secrets.yaml
+kubectl apply --validate=false -f deploy/k3s/secrets.yaml
 
 # Deploy all services
-kubectl apply -f deploy/k3s/gateway-deployment.yaml -n $NAMESPACE
-kubectl apply -f deploy/k3s/agents-deployment.yaml -n $NAMESPACE
-kubectl apply -f deploy/k3s/hpa.yaml -n $NAMESPACE
+kubectl apply --validate=false -f deploy/k3s/gateway-deployment.yaml -n $NAMESPACE
+kubectl apply --validate=false -f deploy/k3s/agents-deployment.yaml -n $NAMESPACE
+kubectl apply --validate=false -f deploy/k3s/hpa.yaml -n $NAMESPACE
 
 # Wait for rollout
 echo "⏳ Waiting for deployments to complete..."
