@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/zebbank/edge-esg-backend/internal/loggers"
-	"google.golang.org/grpc"
+	"github.com/edgeesg/edge-esg-backend/internal/loggers"
+	"google.golang.org/grpc" 
 )
 
 func main() {

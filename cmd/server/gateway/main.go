@@ -3,18 +3,21 @@ package main
 import (
 	"fmt"
 
+	"github.com/edgeesg/edge-esg-backend/internal/config"
+	"github.com/edgeesg/edge-esg-backend/internal/handlers"
+	"github.com/edgeesg/edge-esg-backend/internal/loggers"
+	"github.com/edgeesg/edge-esg-backend/internal/middleware"
+	"github.com/edgeesg/edge-esg-backend/internal/services"
+	"github.com/edgeesg/edge-esg-backend/pkg/database"
 	"github.com/gin-gonic/gin"
-	"github.com/zebbank/edge-esg-backend/internal/config"
-	"github.com/zebbank/edge-esg-backend/internal/handlers"
-	"github.com/zebbank/edge-esg-backend/internal/loggers"
-	"github.com/zebbank/edge-esg-backend/internal/middleware"
-	"github.com/zebbank/edge-esg-backend/internal/services"
-	"github.com/zebbank/edge-esg-backend/pkg/database"
 )
 
 func main() {
 	loggers.Init()
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to load config: %v", err))
+	}
 
 	// Database connections
 	db, err := database.NewGormDB(cfg.DatabaseURL)

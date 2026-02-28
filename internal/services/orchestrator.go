@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zebbank/edge-esg-backend/internal/dtos"
-	"github.com/zebbank/edge-esg-backend/internal/types"
+	"github.com/edgeesg/edge-esg-backend/internal/dtos"
+	"github.com/edgeesg/edge-esg-backend/internal/types"
 )
 
 type Orchestrator struct {
@@ -33,10 +33,10 @@ func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.Anal
 	agentResults := o.callAgentsParallel(ctx, mockData)
 
 	// Layer 3: QUANTUM (Mock D-Wave 8s)
-	quantumResult := o.simulateQuantum(ctx)
+	_ = o.simulateQuantum(ctx)
 
 	// Layer 4: DIGITAL TWIN (Mock 3D factory)
-	twinData := o.simulateDigitalTwin(ctx)
+	_ = o.simulateDigitalTwin(ctx)
 
 	// Layer 5: CONSENSUS (9/10 voting)
 	consensus := o.calculateConsensus(agentResults)

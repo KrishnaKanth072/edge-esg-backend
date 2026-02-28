@@ -1,210 +1,261 @@
-# EDGE ESG Backend - RBI Compliant Trading Platform
+# EDGE ESG Backend
 
-## 🚀 Quick Start (2 Commands)
+[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://hub.docker.com)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5?style=flat&logo=kubernetes)](https://kubernetes.io)
 
+Enterprise-grade ESG (Environmental, Social, Governance) trading platform with RBI compliance, microservices architecture, and comprehensive security features.
+
+## Features
+
+### Core Capabilities
+- **10 Microservices Architecture** - Gateway, Risk, Trading, Quantum, Compliance, Consensus, Blockchain, Digital Twin, Optimization, Regulation agents
+- **ESG Scoring & Analysis** - Real-time ESG score calculation and trading signals
+- **RBI Compliance** - Row-level security, field-level encryption, audit trails
+- **Security Hardened** - AES-256-GCM encryption, Keycloak SSO, rate limiting, input validation
+- **Cloud Native** - Docker containers, Kubernetes manifests, CI/CD pipelines
+
+### Technical Stack
+- **Backend:** Go 1.23+
+- **API:** RESTful HTTP + gRPC
+- **Database:** PostgreSQL 16 with pgcrypto
+- **Cache:** Redis 7
+- **Auth:** Keycloak (OIDC/OAuth2)
+- **Deployment:** Docker, Kubernetes, GitHub Actions
+
+## Quick Start
+
+### Prerequisites
+- Docker Desktop
+- Go 1.23+ (for local development)
+- 8GB RAM minimum
+
+### Run Locally
 ```bash
-# 1. Deploy to GitHub
-bash DEPLOY_MY_CODE.sh
+# Clone repository
+git clone https://github.com/KrishnaKanth072/edge-esg-backend.git
+cd edge-esg-backend
 
-# 2. Test locally
+# Start all services
+make up
+
+# Wait 30 seconds for services to initialize
+sleep 30
+
+# Test health endpoint
+curl http://localhost:8000/health
+
+# Test API
+curl -X POST http://localhost:8000/api/v1/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"company_name":"Suzlon Energy","user_role":"TRADER"}'
+```
+
+### Expected Response
+```json
+{
+  "esg_score": "4.2/10",
+  "risk_action": "REJECT",
+  "trading_signal": {
+    "action": "BUY",
+    "symbol": "SUZLON.NS",
+    "target_price": "₹312",
+    "confidence": 0.91
+  },
+  "processing_time_ms": 45,
+  "audit_hash": "0x...",
+  "masked_data": false
+}
+```
+
+## API Endpoints
+
+### Health Check
+```bash
+GET /health
+```
+
+### ESG Analysis
+```bash
+POST /api/v1/analyze
+Content-Type: application/json
+
+{
+  "company_name": "string",
+  "user_role": "TRADER|COMPLIANCE|ADMIN"
+}
+```
+
+## Architecture
+
+### Microservices
+1. **Gateway** (`:8000`) - HTTP API, routing, authentication
+2. **Risk Agent** (`:50051`) - Risk assessment and scoring
+3. **Trading Agent** (`:50052`) - Trading signal generation
+4. **Quantum Agent** (`:50053`) - Quantum computing simulation
+5. **Compliance Agent** (`:50054`) - Regulatory compliance checks
+6. **Consensus Agent** (`:50055`) - Multi-agent consensus
+7. **Blockchain Agent** (`:50056`) - Audit trail recording
+8. **Digital Twin Agent** (`:50057`) - 3D modeling simulation
+9. **Optimization Agent** (`:50058`) - Portfolio optimization
+10. **Regulation Agent** (`:50059`) - Regulation analysis
+
+### Data Flow
+```
+Client → Gateway → Orchestrator → [10 Agents] → Consensus → Response
+                                        ↓
+                                   Database
+                                   (Encrypted)
+```
+
+## Security Features
+
+### RBI Compliance
+- **Data Isolation:** Row-level security per bank_id
+- **Encryption:** AES-256-GCM field-level encryption
+- **Authentication:** Keycloak SSO with MFA support
+- **Audit Trail:** Immutable blockchain-backed logs
+- **Rate Limiting:** 10,000 requests/minute per bank
+- **Data Masking:** Role-based PII protection
+
+### Security Middleware
+- **Security Headers:** XSS, Clickjacking, CSP protection
+- **Input Validation:** SQL injection & XSS prevention
+- **HTTPS/TLS:** Enforced in production
+- **Security Logging:** All auth attempts and data access logged
+- **Request Limits:** 10MB max body size
+
+## Development
+
+### Build
+```bash
+# Build all services
+make build
+
+# Run tests
+make test
+
+# Run specific service
+go run cmd/server/gateway/main.go
+```
+
+### Environment Variables
+```bash
+DATABASE_URL=postgres://user:pass@host:5432/edge_esg
+REDIS_URL=redis://:pass@host:6379/0
+KEYCLOAK_URL=http://keycloak:8080
+KEYCLOAK_REALM=edgeesg
+SERVER_PORT=8000
+ENCRYPTION_KEY=<64-hex-characters>
+ENVIRONMENT=development|production
+```
+
+### Generate Secure Secrets
+```bash
+bash scripts/generate-secrets.sh
+```
+
+## Deployment
+
+### Docker Compose (Local)
+```bash
 make up
 ```
 
-Your repository: https://github.com/KrishnaKanth072/edge-esg-backend
+### Kubernetes
+```bash
+kubectl apply -f deploy/k3s/namespace.yaml
+kubectl apply -f deploy/k3s/
+```
+
+### Cloud Platforms
+- **Railway:** Connect GitHub repo, auto-deploy
+- **Render:** Deploy from GitHub, select Docker
+- **Heroku:** `heroku stack:set container && git push heroku main`
+- **Oracle Cloud:** See `deploy/oracle-cloud-free/README.md`
+
+## CI/CD
+
+### GitHub Actions Workflows
+- **PR Checks:** Lint, test, build validation
+- **Security Scan:** Daily vulnerability scanning
+- **Dev Deploy:** Auto-deploy to dev on push to `dev` branch
+- **Staging Deploy:** Auto-deploy to staging on push to `main`
+- **Production Deploy:** Manual approval required
+
+### Branch Strategy
+- `main` - Production-ready code
+- `dev` - Development branch
+- `feature/*` - Feature branches
+
+## Database Schema
+
+### Tables
+- `esg_scores` - ESG analysis results (encrypted)
+- `audit_trails` - Immutable audit logs
+- `trade_signals` - Trading recommendations
+
+### Migrations
+Located in `internal/migrations/`, auto-run on startup.
+
+## Monitoring
+
+### Health Checks
+- Liveness: `/health`
+- Readiness: Database + Redis connectivity
+
+### Logs
+```bash
+# View gateway logs
+docker-compose logs -f gateway
+
+# View all logs
+docker-compose logs -f
+```
+
+## Troubleshooting
+
+### Gateway won't start
+```bash
+# Restart gateway (Keycloak may need time to initialize)
+docker-compose restart gateway
+```
+
+### Port already in use
+```bash
+# Check what's using port 8000
+netstat -ano | findstr :8000
+
+# Or change port in docker-compose.yml
+ports:
+  - "8001:8000"
+```
+
+### Out of memory
+Increase Docker Desktop memory to 8GB:
+Settings → Resources → Memory → 8GB
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+
+## License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
+
+## Support
+
+- **Issues:** [GitHub Issues](https://github.com/KrishnaKanth072/edge-esg-backend/issues)
+- **Documentation:** See `/docs` folder
+- **Email:** krishnakrishna99233@gmail.com
+
+## Acknowledgments
+
+Built with modern cloud-native technologies for enterprise-grade ESG analysis and trading.
 
 ---
 
-# EDGE ESG Backend - RBI Compliant Trading Platform
-
-## 🏦 RBI Compliance Features
-- **Data Isolation**: Row-Level Security per bank_id
-- **Encryption**: AES-256-GCM field-level encryption (pgcrypto)
-- **Authentication**: Keycloak SSO with MFA (TOTP)
-- **Audit Trail**: Blockchain-backed immutable logs
-- **Rate Limiting**: 10K req/min per bank
-- **Data Masking**: Role-based PII protection
-
-## 🚀 Quick Start
-```bash
-make up      # Start all services
-make test    # Run tests
-make build   # Build Docker images
-make deploy  # Deploy to k3s
-```
-
-## 🔐 Default Credentials
-- **Keycloak**: admin/admin (http://localhost:8080)
-- **PostgreSQL**: edge_admin/edge_secure_2024
-- **Redis**: edge_redis_2024
-
-## 📡 API Endpoints
-- **Gateway**: http://localhost:8000
-- **Health**: http://localhost:8000/health
-- **Analyze**: POST http://localhost:8000/analyze
-- **WebSocket**: ws://localhost:8000/ws
-
-## 🏗 Architecture
-10 Golang microservices communicating via gRPC:
-1. Gateway (HTTP/gRPC)
-2. Risk Agent (ESG scoring)
-3. Trading Agent (BUY/SELL signals)
-4. Quantum Agent (D-Wave simulation)
-5. Compliance Agent (147 regulations)
-6. Consensus Agent (9/10 voting)
-7. Blockchain Agent (Polygon Mumbai)
-8. Digital Twin Agent (3D factory)
-9. Optimization Agent (Portfolio)
-10. Regulation Agent (Zero-shot)
-
-## 📊 Technology Stack
-- **HTTP**: Gin v1.9.1
-- **gRPC**: v1.60.1
-- **Database**: PostgreSQL 16 + pgxpool
-- **Cache**: Redis 7
-- **Auth**: Keycloak (OIDC)
-- **Logging**: zerolog
-- **ORM**: GORM v1.25.7
-
-
-## 🔄 CI/CD Pipeline
-
-### GitHub Actions
-- **Automated Testing**: Runs on every push/PR
-- **Docker Build**: Builds all 10 microservices
-- **Security Scanning**: Trivy + GoSec daily scans
-- **Auto Deploy**: Staging (develop) + Production (main)
-
-### GitLab CI/CD
-- **3-Stage Pipeline**: test → build → deploy
-- **Parallel Builds**: All 10 services build simultaneously
-- **Manual Production**: Requires approval for prod deployment
-
-### Deployment Commands
-```bash
-# Deploy to staging
-./scripts/deploy.sh staging
-
-# Deploy to production
-./scripts/deploy.sh production
-
-# Rollback gateway in production
-./scripts/rollback.sh production gateway
-
-# Scale trading agent
-kubectl scale deployment/trading-agent --replicas=20 -n edge-production
-```
-
-### Required Secrets (GitHub/GitLab)
-- `K3S_STAGING_URL` / `K3S_PROD_URL`
-- `K3S_STAGING_TOKEN` / `K3S_PROD_TOKEN`
-- `SLACK_WEBHOOK` (optional notifications)
-- `GITHUB_TOKEN` (auto-provided by GitHub)
-
-### Monitoring
-- **Kubernetes HPA**: Auto-scales 3-20 replicas based on CPU/memory
-- **Health Checks**: Liveness + Readiness probes
-- **Resource Limits**: Memory 256Mi-512Mi, CPU 250m-500m
-
-
-## 🌳 Git Workflow & Environments
-
-### Branch Strategy
-```
-dev → main → release/v* (tags)
- ↓      ↓         ↓
-Dev   Staging  Production
-```
-
-### Environments
-| Environment | Branch | URL | Auto-Deploy | Replicas |
-|-------------|--------|-----|-------------|----------|
-| **Local** | any | localhost:8000 | No | 1 |
-| **Dev** | dev | dev.edge.zebbank.com | ✅ Yes | 1 |
-| **Staging** | main | staging.edge.zebbank.com | ✅ Yes | 2-3 |
-| **Production** | v* tags | edge.zebbank.com | ⚠️ Manual | 3-20 |
-
-### Quick Start with GitHub
-
-1. **Push to GitHub**
-```bash
-git init
-git add .
-git commit -m "Initial commit: EDGE ESG Backend"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/edge-esg-backend.git
-git push -u origin main
-
-# Create dev branch
-git checkout -b dev
-git push -u origin dev
-```
-
-2. **Configure GitHub Secrets**
-Go to: Settings → Secrets and variables → Actions
-- `KUBECONFIG_DEV` - Dev cluster config
-- `KUBECONFIG_STAGING` - Staging cluster config
-- `KUBECONFIG_PROD` - Production cluster config
-- `SLACK_WEBHOOK` - Slack notifications (optional)
-
-3. **Enable GitHub Actions**
-- Go to Actions tab
-- Enable workflows
-- Push to `dev` branch → Auto-deploys to dev
-- Push to `main` branch → Auto-deploys to staging
-- Create tag `v1.0.0` → Manual approval for production
-
-4. **Create Release**
-```bash
-git checkout main
-git tag -a v1.0.0 -m "Release v1.0.0: Initial production release"
-git push origin v1.0.0
-```
-Then approve deployment in GitHub Actions.
-
-### Development Workflow
-```bash
-# Feature development
-git checkout dev
-git checkout -b feature/new-agent
-# ... make changes ...
-git commit -m "feat: add new ESG agent"
-git push origin feature/new-agent
-# Create PR to dev → Auto-deploys after merge
-
-# Promote to staging
-git checkout main
-git merge dev
-git push origin main
-# Auto-deploys to staging
-
-# Release to production
-git tag -a v1.1.0 -m "Release v1.1.0"
-git push origin v1.1.0
-# Requires manual approval in GitHub Actions
-```
-
-See [BRANCHING_STRATEGY.md](BRANCHING_STRATEGY.md) for complete workflow details.
-
-
-## 💰 100% FREE Deployment
-
-Deploy to production for **$0/month** using Oracle Cloud Always Free tier:
-
-```bash
-# See complete guide
-cat deploy/oracle-cloud-free/README.md
-
-# Quick setup
-./deploy/oracle-cloud-free/setup.sh
-```
-
-**What you get FREE:**
-- 4 ARM CPUs + 24GB RAM
-- 200GB storage
-- 10TB bandwidth/month
-- Public IP + SSL certificate
-- Custom domain (DuckDNS)
-
-**Total savings: $3,360/year** compared to AWS!
-
-See [COST_BREAKDOWN.md](deploy/oracle-cloud-free/COST_BREAKDOWN.md) for details.
+**Status:** Production-ready MVP  
+**Version:** 1.0.0  
+**Last Updated:** February 2026

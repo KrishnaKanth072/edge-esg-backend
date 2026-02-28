@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: risk-agent
-        image: ghcr.io/zebbank/edge/risk-agent:latest
+        image: ghcr.io/krishnakanth072/edge-esg-backend/risk-agent:latest
         ports:
         - containerPort: 50051
         resources:
@@ -56,7 +56,7 @@ spec:
     spec:
       containers:
       - name: trading-agent
-        image: ghcr.io/zebbank/edge/trading-agent:latest
+        image: ghcr.io/krishnakanth072/edge-esg-backend/trading-agent:latest
         ports:
         - containerPort: 50052
 ---

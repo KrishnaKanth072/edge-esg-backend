@@ -14,6 +14,9 @@ const (
 	AuthInvalidToken ErrorCode = "AUTH_INVALID_TOKEN"
 	AuthExpiredToken ErrorCode = "AUTH_EXPIRED_TOKEN"
 
+	// Validation Errors
+	ValidationFailed ErrorCode = "VALIDATION_FAILED"
+
 	// Database Errors
 	DBConnectionFailed    ErrorCode = "DB_CONNECTION_FAILED"
 	DBQueryFailed         ErrorCode = "DB_QUERY_FAILED"

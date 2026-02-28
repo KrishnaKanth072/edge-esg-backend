@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: gateway
-        image: ghcr.io/zebbank/edge/gateway:latest
+        image: ghcr.io/krishnakanth072/edge-esg-backend/gateway:latest
         ports:
         - containerPort: 8000
         env:

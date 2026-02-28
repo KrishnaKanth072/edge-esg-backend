@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zebbank/edge-esg-backend/internal/dtos"
-	"github.com/zebbank/edge-esg-backend/internal/error_codes"
-	"github.com/zebbank/edge-esg-backend/internal/services"
-	"github.com/zebbank/edge-esg-backend/internal/validator"
+	"github.com/edgeesg/edge-esg-backend/internal/dtos"
+	"github.com/edgeesg/edge-esg-backend/internal/error_codes"
+	"github.com/edgeesg/edge-esg-backend/internal/services"
+	"github.com/edgeesg/edge-esg-backend/internal/validator"
 )
 
 type AnalyzeHandler struct {
