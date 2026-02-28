@@ -1,0 +1,13 @@
+# CODEOWNERS - Defines who must approve PRs
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owner - KrishnaKanth072 must approve ALL changes
+* @KrishnaKanth072
+
+# Critical files require extra review
+/deploy/ @KrishnaKanth072
+/internal/middleware/ @KrishnaKanth072
+/internal/migrations/ @KrishnaKanth072
+/.github/workflows/ @KrishnaKanth072
+/go.mod @KrishnaKanth072
+/docker-compose.yml @KrishnaKanth072
