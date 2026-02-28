@@ -12,7 +12,7 @@ const (
 	AuthUnauthorized ErrorCode = "AUTH_UNAUTHORIZED"
 	AuthForbidden    ErrorCode = "AUTH_FORBIDDEN"
 	AuthInvalidToken ErrorCode = "AUTH_INVALID_TOKEN" // #nosec G101 -- This is an error code constant, not a credential
-	AuthExpiredToken ErrorCode = "AUTH_EXPIRED_TOKEN"
+	AuthExpiredToken ErrorCode = "AUTH_EXPIRED_TOKEN" // #nosec G101 -- This is an error code constant, not a credential
 
 	// Validation Errors
 	ValidationFailed ErrorCode = "VALIDATION_FAILED"
