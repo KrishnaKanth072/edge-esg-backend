@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: zebbank/edge
+  IMAGE_PREFIX: krishnakanth072/edge
 
 jobs:
   test:

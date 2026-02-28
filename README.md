@@ -1,5 +1,13 @@
 # EDGE ESG Backend - RBI Compliant Trading Platform
 
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI/CD](https://github.com/KrishnaKanth072/edge-esg-backend/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/KrishnaKanth072/edge-esg-backend/actions)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://hub.docker.com)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5?style=flat&logo=kubernetes)](https://kubernetes.io)
+
+> Enterprise-grade ESG trading platform with RBI compliance, quantum computing integration, and blockchain-backed audit trails. Deploy for FREE on Oracle Cloud.
+
 ## 🚀 Quick Start (2 Commands)
 
 ```bash
@@ -208,3 +216,30 @@ cat deploy/oracle-cloud-free/README.md
 **Total savings: $3,360/year** compared to AWS!
 
 See [COST_BREAKDOWN.md](deploy/oracle-cloud-free/COST_BREAKDOWN.md) for details.
+
+
+## 📝 Documentation
+
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Branch Protection Setup](SETUP_BRANCH_PROTECTION.md)
+- [Oracle Cloud Deployment](deploy/oracle-cloud-free/README.md)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## 👨‍💻 Author
+
+**Krishna Kanth** - [@KrishnaKanth072](https://github.com/KrishnaKanth072)
+
+## ⭐ Show Your Support
+
+Give a ⭐️ if this project helped you!
+
+---
+
+**Built with ❤️ for RBI-compliant ESG trading**
