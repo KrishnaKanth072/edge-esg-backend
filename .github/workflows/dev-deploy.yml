@@ -57,13 +57,3 @@ jobs:
           kubectl apply -f deploy/environments/dev/
           kubectl set image deployment/gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/gateway:dev-${{ github.sha }} -n edge-dev
           kubectl rollout status deployment/gateway -n edge-dev --timeout=5m
-      
-      - name: Notify Slack
-        if: always()
-        uses: slackapi/slack-github-action@v1
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
-          payload: |
-            {
-              "text": "${{ job.status == 'success' && '✅' || '❌' }} Dev deployment ${{ job.status }} - ${{ github.sha }}"
-            }

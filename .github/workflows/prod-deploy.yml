@@ -63,38 +63,9 @@ jobs:
           curl -f https://edge.zebbank.com/health || exit 1
           # Add more critical endpoint checks
       
-      - name: Notify Slack - Success
-        if: success()
-        uses: slackapi/slack-github-action@v1
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
-          payload: |
-            {
-              "text": "🚀 Production deployment successful!",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*EDGE ESG Backend - Production Deployment*\n✅ Version: ${{ github.event.release.tag_name || github.event.inputs.version }}\n🔗 <https://edge.zebbank.com|Production URL>"
-                  }
-                }
-              ]
-            }
-      
       - name: Rollback on failure
         if: failure()
         run: |
           export KUBECONFIG=kubeconfig
           kubectl rollout undo deployment/gateway -n edge-production
           kubectl rollout status deployment/gateway -n edge-production --timeout=5m
-      
-      - name: Notify Slack - Failure
-        if: failure()
-        uses: slackapi/slack-github-action@v1
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
-          payload: |
-            {
-              "text": "❌ Production deployment FAILED and rolled back!"
-            }
