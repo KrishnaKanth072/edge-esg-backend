@@ -428,7 +428,10 @@ func (r *RealTimeAgents) GetAlphaVantagePrice(symbol string) (float64, error) {
 	}
 
 	price := 0.0
-	fmt.Sscanf(priceStr, "%f", &price)
+	_, err = fmt.Sscanf(priceStr, "%f", &price)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse price: %w", err)
+	}
 
 	if price == 0 {
 		return 0, fmt.Errorf("invalid price")
