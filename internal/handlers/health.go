@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/edgeesg/edge-esg-backend/internal/dtos"
+	"github.com/gin-gonic/gin"
 )
 
 var startTime = time.Now()
