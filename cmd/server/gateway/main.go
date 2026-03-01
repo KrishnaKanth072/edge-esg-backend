@@ -33,6 +33,7 @@ func main() {
 	// Initialize services
 	orchestrator := services.NewOrchestrator()
 	analyzeHandler := handlers.NewAnalyzeHandler(orchestrator)
+	portfolioHandler := handlers.NewPortfolioHandler(orchestrator)
 	wsHub := handlers.NewWSHub()
 
 	// Start WebSocket hub
@@ -55,6 +56,7 @@ func main() {
 	api := r.Group("/api/v1")
 	{
 		api.POST("/analyze", analyzeHandler.Analyze)
+		api.POST("/portfolio/compare", portfolioHandler.ComparePortfolio)
 	}
 
 	loggers.Info("Gateway server starting", map[string]interface{}{

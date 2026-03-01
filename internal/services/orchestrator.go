@@ -166,3 +166,145 @@ func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.Anal
 
 	return response, nil
 }
+
+// ComparePortfolio analyzes multiple companies and provides portfolio optimization
+func (o *Orchestrator) ComparePortfolio(ctx context.Context, req *dtos.PortfolioCompareRequest) (*dtos.PortfolioCompareResponse, error) {
+	startTime := time.Now()
+
+	response := &dtos.PortfolioCompareResponse{
+		Companies:         make([]dtos.CompanyComparison, 0, len(req.Companies)),
+		OptimalAllocation: make([]float64, len(req.Companies)),
+		Timestamp:         time.Now(),
+	}
+
+	// Analyze each company
+	esgScores := make([]float64, len(req.Companies))
+	expectedReturns := make([]float64, len(req.Companies))
+	bestESGScore := 0.0
+	lowestRisk := 100.0
+
+	for i, companyName := range req.Companies {
+		// Get real-time data
+		sentiment, _ := o.realtimeAgents.GetNewsSentiment(companyName)
+		if sentiment == 0 {
+			sentiment = 0.5
+		}
+
+		// ESG Scoring
+		esgReq := &agents.ESGCalculationRequest{
+			CompanyName:   companyName,
+			NewsSentiment: sentiment,
+			Industry:      "technology",
+		}
+		esgResult, err := o.esgScoringAgent.CalculateESG(ctx, esgReq)
+		if err != nil {
+			continue
+		}
+
+		// Risk Assessment
+		riskReq := &agents.RiskAssessmentRequest{
+			CompanyName:     companyName,
+			ESGScore:        esgResult.OverallScore,
+			NewsSentiment:   sentiment,
+			StockVolatility: 0.15,
+		}
+		riskResult, _ := o.riskAgent.AssessRisk(ctx, riskReq)
+
+		// Trading Signal
+		stockSymbol := o.realtimeAgents.GuessStockSymbol(companyName)
+		stockData, _ := o.realtimeAgents.GetStockPrice(stockSymbol)
+		currentPrice := 0.0
+		if stockData != nil {
+			currentPrice = stockData.Price
+		} else {
+			currentPrice, _ = o.realtimeAgents.GetAlphaVantagePrice(stockSymbol)
+		}
+
+		tradingReq := &agents.TradingSignalRequest{
+			CompanyName:  companyName,
+			Symbol:       stockSymbol,
+			CurrentPrice: currentPrice,
+			ESGScore:     esgResult.OverallScore,
+			Sentiment:    sentiment,
+		}
+		tradingResult, _ := o.tradingAgent.GenerateSignal(ctx, tradingReq)
+
+		// Compliance Check
+		complianceReq := &agents.ComplianceRequest{
+			CompanyName: companyName,
+			Industry:    "technology",
+			Region:      "global",
+		}
+		complianceResult, _ := o.complianceAgent.CheckCompliance(ctx, complianceReq)
+
+		// Regulation Analysis
+		regulationReq := &agents.RegulationRequest{
+			CompanyName: companyName,
+			Region:      "global",
+			Industry:    "technology",
+		}
+		regulationResult, _ := o.regulationAgent.AnalyzeRegulations(ctx, regulationReq)
+
+		// Build comparison entry
+		comparison := dtos.CompanyComparison{
+			CompanyName:   companyName,
+			ESGScore:      esgResult.OverallScore,
+			Environmental: esgResult.Environmental,
+			Social:        esgResult.Social,
+			Governance:    esgResult.Governance,
+			RiskLevel:     riskResult.RiskLevel,
+			RiskScore:     riskResult.RiskScore,
+			TradingSignal: dtos.TradingSignal{
+				Action:       tradingResult.Action,
+				Symbol:       tradingResult.Symbol,
+				CurrentPrice: fmt.Sprintf("$%.2f", tradingResult.CurrentPrice),
+				TargetPrice:  fmt.Sprintf("$%.2f", tradingResult.TargetPrice),
+				PriceChange:  fmt.Sprintf("%.1f%%", tradingResult.PriceChangePercent),
+				Confidence:   tradingResult.Confidence,
+			},
+			ComplianceScore: complianceResult.ComplianceScore,
+			RegulatoryRisk:  regulationResult.RegulatoryRiskScore,
+		}
+
+		response.Companies = append(response.Companies, comparison)
+
+		// Track for optimization
+		esgScores[i] = esgResult.OverallScore
+		expectedReturns[i] = tradingResult.PriceChangePercent
+
+		// Track best performers
+		if esgResult.OverallScore > bestESGScore {
+			bestESGScore = esgResult.OverallScore
+			response.BestESGCompany = companyName
+		}
+		if riskResult.RiskScore < lowestRisk {
+			lowestRisk = riskResult.RiskScore
+			response.LowestRiskCompany = companyName
+		}
+	}
+
+	// Portfolio Optimization
+	if len(response.Companies) > 0 {
+		riskTolerance := req.RiskTolerance
+		if riskTolerance == 0 {
+			riskTolerance = 0.5 // Default moderate risk
+		}
+
+		portfolioReq := &agents.PortfolioRequest{
+			Companies:       req.Companies,
+			ESGScores:       esgScores,
+			ExpectedReturns: expectedReturns,
+			RiskTolerance:   riskTolerance,
+		}
+		portfolioResult, err := o.optimizationAgent.OptimizePortfolio(ctx, portfolioReq)
+		if err == nil {
+			response.OptimalAllocation = portfolioResult.OptimalWeights
+			response.PortfolioESGScore = portfolioResult.ESGScore
+			response.PortfolioRisk = portfolioResult.PortfolioRisk
+			response.ExpectedReturn = portfolioResult.ExpectedReturn
+		}
+	}
+
+	response.ProcessingTimeMs = time.Since(startTime).Milliseconds()
+	return response, nil
+}
