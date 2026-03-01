@@ -4,7 +4,9 @@ on:
   schedule:
     - cron: '0 2 * * *'
   push:
-    branches: [main]
+    branches: [main, Teach, dev, staging]
+  pull_request:
+    branches: [main, Teach, dev, staging]
 
 jobs:
   trivy-scan:
