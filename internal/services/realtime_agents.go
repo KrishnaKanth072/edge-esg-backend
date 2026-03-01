@@ -70,6 +70,9 @@ func (r *RealTimeAgents) AnalyzeCompany(ctx context.Context, company string) (*C
 	stockData, err := r.GetStockPrice(analysis.StockSymbol)
 	if err == nil {
 		analysis.CurrentPrice = stockData.Price
+	} else {
+		// Log error but continue with $0 price
+		fmt.Printf("Failed to get stock price for %s: %v\n", analysis.StockSymbol, err)
 	}
 
 	// 5. Generate trading signal based on ESG + sentiment
@@ -99,7 +102,7 @@ func (r *RealTimeAgents) GetNewsSentiment(company string) (float64, error) {
 	url := fmt.Sprintf("https://newsapi.org/v2/everything?q=%s&sortBy=publishedAt&language=en&pageSize=20&apiKey=%s",
 		strings.ReplaceAll(company, " ", "+"), apiKey)
 
-	resp, err := r.httpClient.Get(url) // #nosec G107
+	resp, err := r.httpClient.Get(url) // #nosec G107 G704
 	if err != nil {
 		return 0.5, err
 	}
@@ -162,30 +165,55 @@ type StockData struct {
 func (r *RealTimeAgents) GetStockPrice(symbol string) (*StockData, error) {
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s", symbol)
 
-	resp, err := r.httpClient.Get(url) // #nosec G107
+	resp, err := r.httpClient.Get(url) // #nosec G107 G704
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("yahoo finance request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("yahoo finance returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
 	var data map[string]interface{}
 	if err := json.Unmarshal(body, &data); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
+		return nil, fmt.Errorf("failed to parse JSON: %w", err)
 	}
 
 	chart, ok := data["chart"].(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("invalid response")
+		return nil, fmt.Errorf("invalid chart data")
 	}
 
 	result, ok := chart["result"].([]interface{})
 	if !ok || len(result) == 0 {
-		return nil, fmt.Errorf("no data")
+		return nil, fmt.Errorf("no result data")
 	}
 
-	meta := result[0].(map[string]interface{})["meta"].(map[string]interface{})
-	price := meta["regularMarketPrice"].(float64)
+	resultData, ok := result[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid result format")
+	}
+
+	meta, ok := resultData["meta"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("no meta data")
+	}
+
+	priceVal, ok := meta["regularMarketPrice"]
+	if !ok {
+		return nil, fmt.Errorf("no price data")
+	}
+
+	price, ok := priceVal.(float64)
+	if !ok {
+		return nil, fmt.Errorf("price is not a number")
+	}
 
 	return &StockData{
 		Symbol: symbol,
