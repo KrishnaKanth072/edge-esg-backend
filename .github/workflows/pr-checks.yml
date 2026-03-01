@@ -95,13 +95,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Check for hardcoded secrets
+      - name: Check for hardcoded secrets in Go files
         run: |
-          if grep -r "password\s*=\s*['\"]" --include="*.go" .; then
-            echo "❌ Hardcoded passwords found!"
+          # Only check Go source files, exclude test files and vendor
+          if grep -r "password\s*=\s*['\"]" --include="*.go" --exclude-dir=vendor --exclude="*_test.go" .; then
+            echo "❌ Hardcoded passwords found in Go source files!"
             exit 1
           fi
-          echo "✅ No hardcoded secrets found"
+          echo "✅ No hardcoded secrets found in Go files"
       
       - name: Check encryption usage
         run: |

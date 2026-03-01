@@ -23,10 +23,24 @@ jobs:
       - name: Run tests
         run: make test
 
+  security-gate:
+    name: Security Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for hardcoded secrets
+        run: |
+          if grep -r "password\s*=\s*['\"]" --include="*.go" --exclude-dir=vendor --exclude="*_test.go" .; then
+            echo "❌ Hardcoded passwords found! Deployment blocked."
+            exit 1
+          fi
+          echo "✅ Security gate passed"
+
   build-and-deploy-dev:
     name: Build & Deploy to Dev
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, security-gate]
     permissions:
       contents: read
       packages: write
