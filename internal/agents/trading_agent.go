@@ -28,6 +28,16 @@ type TradingSignalResponse struct {
 	PriceChangePercent float64
 	Confidence         float64
 	Reasoning          string
+	HistoricalReturns  []HistoricalReturn // New field
+}
+
+type HistoricalReturn struct {
+	Period     string // "1 Month", "3 Months", "6 Months", "1 Year"
+	StartDate  string // "2024-01-01"
+	EndDate    string // "2024-02-01"
+	StartPrice float64
+	EndPrice   float64
+	ReturnPct  float64 // Percentage return
 }
 
 // GenerateSignal creates trading recommendations based on ESG and market data

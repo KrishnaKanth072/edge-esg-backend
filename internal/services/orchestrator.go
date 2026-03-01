@@ -161,6 +161,9 @@ func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.Anal
 	}
 	auditResult, _ := o.blockchainAgent.RecordAudit(ctx, auditReq)
 
+	// Step 9: Get historical returns for investment analysis
+	historicalReturns := o.realtimeAgents.CalculateHistoricalReturns(stockSymbol, currentPrice)
+
 	// Build comprehensive response
 	response := &dtos.AnalyzeResponse{
 		ESGScore:   fmt.Sprintf("%.1f/10", esgResult.OverallScore),
@@ -173,10 +176,11 @@ func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.Anal
 			PriceChange:  fmt.Sprintf("%.1f%%", tradingResult.PriceChangePercent),
 			Confidence:   tradingResult.Confidence,
 		},
-		RiskReasons:      riskResult.Reasons,
-		ProcessingTimeMs: time.Since(startTime).Milliseconds(),
-		AuditHash:        auditResult.TransactionHash,
-		Timestamp:        time.Now(),
+		HistoricalReturns: historicalReturns,
+		RiskReasons:       riskResult.Reasons,
+		ProcessingTimeMs:  time.Since(startTime).Milliseconds(),
+		AuditHash:         auditResult.TransactionHash,
+		Timestamp:         time.Now(),
 	}
 
 	return response, nil

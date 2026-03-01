@@ -463,3 +463,116 @@ func (r *RealTimeAgents) GetAlphaVantagePrice(symbol string) (float64, error) {
 
 	return price, nil
 }
+
+// GetHistoricalPrices gets historical stock prices for calculating returns
+func (r *RealTimeAgents) GetHistoricalPrices(symbol string) (map[string]float64, error) {
+	apiKey := os.Getenv("ALPHA_VANTAGE_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("ALPHA_VANTAGE_KEY not set")
+	}
+
+	// Remove .NS suffix for Alpha Vantage
+	cleanSymbol := strings.TrimSuffix(symbol, ".NS")
+
+	// Get daily time series (last 100 days)
+	url := fmt.Sprintf("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&apikey=%s",
+		cleanSymbol, apiKey)
+
+	resp, err := r.httpClient.Get(url) // #nosec G107 G704
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	var data map[string]interface{}
+	if err := json.Unmarshal(body, &data); err != nil {
+		return nil, err
+	}
+
+	timeSeries, ok := data["Time Series (Daily)"].(map[string]interface{})
+	if !ok || len(timeSeries) == 0 {
+		return nil, fmt.Errorf("no historical data available")
+	}
+
+	// Extract prices by date
+	prices := make(map[string]float64)
+	for date, dayData := range timeSeries {
+		dayMap, ok := dayData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		closeStr, ok := dayMap["4. close"].(string)
+		if !ok {
+			continue
+		}
+		price := 0.0
+		_, err = fmt.Sscanf(closeStr, "%f", &price)
+		if err == nil && price > 0 {
+			prices[date] = price
+		}
+	}
+
+	return prices, nil
+}
+
+// CalculateHistoricalReturns calculates returns for different time periods
+func (r *RealTimeAgents) CalculateHistoricalReturns(symbol string, currentPrice float64) []map[string]interface{} {
+	prices, err := r.GetHistoricalPrices(symbol)
+	if err != nil || len(prices) == 0 {
+		return []map[string]interface{}{}
+	}
+
+	now := time.Now()
+	returns := []map[string]interface{}{}
+
+	// Define periods to check
+	periods := []struct {
+		name   string
+		months int
+	}{
+		{"1 Month", 1},
+		{"3 Months", 3},
+		{"6 Months", 6},
+		{"1 Year", 12},
+	}
+
+	for _, period := range periods {
+		startDate := now.AddDate(0, -period.months, 0)
+
+		// Find closest available date
+		var closestDate string
+		var closestPrice float64
+		minDiff := time.Hour * 24 * 365 // 1 year
+
+		for dateStr, price := range prices {
+			priceDate, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				continue
+			}
+			diff := startDate.Sub(priceDate)
+			if diff < 0 {
+				diff = -diff
+			}
+			if diff < minDiff {
+				minDiff = diff
+				closestDate = dateStr
+				closestPrice = price
+			}
+		}
+
+		if closestPrice > 0 {
+			returnPct := ((currentPrice - closestPrice) / closestPrice) * 100
+			returns = append(returns, map[string]interface{}{
+				"period":      period.name,
+				"start_date":  closestDate,
+				"end_date":    now.Format("2006-01-02"),
+				"start_price": closestPrice,
+				"end_price":   currentPrice,
+				"return_pct":  returnPct,
+			})
+		}
+	}
+
+	return returns
+}

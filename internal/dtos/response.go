@@ -3,14 +3,15 @@ package dtos
 import "time"
 
 type AnalyzeResponse struct {
-	ESGScore         string        `json:"esg_score"`
-	RiskAction       string        `json:"risk_action"`
-	RiskReasons      []string      `json:"risk_reasons,omitempty"`
-	TradingSignal    TradingSignal `json:"trading_signal"`
-	AuditHash        string        `json:"audit_hash"`
-	ProcessingTimeMs int64         `json:"processing_time_ms"`
-	MaskedData       bool          `json:"masked_data"`
-	Timestamp        time.Time     `json:"timestamp"`
+	ESGScore          string                   `json:"esg_score"`
+	RiskAction        string                   `json:"risk_action"`
+	RiskReasons       []string                 `json:"risk_reasons,omitempty"`
+	TradingSignal     TradingSignal            `json:"trading_signal"`
+	HistoricalReturns []map[string]interface{} `json:"historical_returns,omitempty"`
+	AuditHash         string                   `json:"audit_hash"`
+	ProcessingTimeMs  int64                    `json:"processing_time_ms"`
+	MaskedData        bool                     `json:"masked_data"`
+	Timestamp         time.Time                `json:"timestamp"`
 }
 
 type TradingSignal struct {
