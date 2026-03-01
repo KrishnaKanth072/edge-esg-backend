@@ -102,7 +102,9 @@ func (r *RealTimeAgents) GetNewsSentiment(company string) (float64, error) {
 
 	body, _ := io.ReadAll(resp.Body)
 	var newsData map[string]interface{}
-	json.Unmarshal(body, &newsData)
+	if err := json.Unmarshal(body, &newsData); err != nil {
+		return 0.5, nil // Return neutral on parse error
+	}
 
 	articles, ok := newsData["articles"].([]interface{})
 	if !ok || len(articles) == 0 {
@@ -163,7 +165,9 @@ func (r *RealTimeAgents) GetStockPrice(symbol string) (*StockData, error) {
 
 	body, _ := io.ReadAll(resp.Body)
 	var data map[string]interface{}
-	json.Unmarshal(body, &data)
+	if err := json.Unmarshal(body, &data); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
 
 	chart, ok := data["chart"].(map[string]interface{})
 	if !ok {

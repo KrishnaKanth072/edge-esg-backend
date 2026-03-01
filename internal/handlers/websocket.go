@@ -49,7 +49,7 @@ func (h *WSHub) Run() {
 			h.mu.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
-				client.Close()
+				_ = client.Close()
 			}
 			h.mu.Unlock()
 
@@ -58,7 +58,7 @@ func (h *WSHub) Run() {
 			for client := range h.clients {
 				err := client.WriteJSON(message)
 				if err != nil {
-					client.Close()
+					_ = client.Close()
 					delete(h.clients, client)
 				}
 			}
