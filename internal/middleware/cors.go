@@ -23,16 +23,21 @@ func CORS() gin.HandlerFunc {
 		// Check if origin is allowed
 		allowed := false
 		for _, allowedOrigin := range allowedOrigins {
-			if origin == allowedOrigin || strings.HasSuffix(origin, ".vercel.app") {
+			if origin == allowedOrigin {
 				allowed = true
 				break
 			}
 		}
 
-		if allowed {
+		// Allow all Vercel deployments
+		if strings.HasSuffix(origin, ".vercel.app") {
+			allowed = true
+		}
+
+		if allowed && origin != "" {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 		} else {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		}
 
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
