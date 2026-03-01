@@ -6,7 +6,7 @@ on:
     - cron: '0 9 * * 1'
   workflow_dispatch: # Manual trigger
   push:
-    branches: [main]
+    branches: [main, Teach, dev, staging]
     paths:
       - 'go.mod'
       - 'go.sum'

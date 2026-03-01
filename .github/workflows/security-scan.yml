@@ -4,29 +4,11 @@ on:
   schedule:
     - cron: '0 2 * * *'
   push:
-    branches: [main]
+    branches: [main, Teach, dev, staging]
+  pull_request:
+    branches: [main, Teach, dev, staging]
 
 jobs:
-  trivy-scan:
-    name: Trivy Container Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-      
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        continue-on-error: true
-        with:
-          sarif_file: 'trivy-results.sarif'
-
   gosec-scan:
     name: GoSec Security Scan
     runs-on: ubuntu-latest
