@@ -2,8 +2,8 @@ package dtos
 
 type AnalyzeRequest struct {
 	CompanyName string `json:"company_name" validate:"required,min=2,max=100"`
-	BankID      string `json:"bank_id" validate:"required,uuid"`
-	Mode        string `json:"mode" validate:"required,oneof=auto manual"`
+	BankID      string `json:"bank_id" validate:"omitempty,uuid"`
+	Mode        string `json:"mode" validate:"omitempty,oneof=auto manual"`
 	UserRole    string `json:"user_role,omitempty"`
 }
 
