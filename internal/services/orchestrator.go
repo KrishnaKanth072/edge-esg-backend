@@ -164,8 +164,8 @@ func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.Anal
 	// Step 9: Get historical returns for investment analysis
 	historicalReturns := o.realtimeAgents.CalculateHistoricalReturns(stockSymbol, currentPrice)
 
-	// Step 10: Calculate investment projections
-	investmentProjections := o.realtimeAgents.CalculateInvestmentProjections(currentPrice, tradingResult.PriceChangePercent)
+	// Step 10: Calculate investment projections based on historical returns
+	investmentProjections := o.realtimeAgents.CalculateInvestmentProjections(stockSymbol, currentPrice, historicalReturns)
 
 	// Build comprehensive response
 	response := &dtos.AnalyzeResponse{

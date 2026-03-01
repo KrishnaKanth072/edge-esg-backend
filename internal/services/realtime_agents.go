@@ -517,7 +517,7 @@ func (r *RealTimeAgents) GetHistoricalPrices(symbol string) (map[string]float64,
 	return prices, nil
 }
 
-// CalculateHistoricalReturns calculates returns for different time periods
+// CalculateHistoricalReturns calculates REAL returns for different time periods with actual dates
 func (r *RealTimeAgents) CalculateHistoricalReturns(symbol string, currentPrice float64) []map[string]interface{} {
 	prices, err := r.GetHistoricalPrices(symbol)
 	if err != nil || len(prices) == 0 {
@@ -527,7 +527,7 @@ func (r *RealTimeAgents) CalculateHistoricalReturns(symbol string, currentPrice 
 	now := time.Now()
 	returns := []map[string]interface{}{}
 
-	// Define periods to check
+	// Define periods to check (looking back in time for REAL data)
 	periods := []struct {
 		name   string
 		months int
@@ -536,22 +536,30 @@ func (r *RealTimeAgents) CalculateHistoricalReturns(symbol string, currentPrice 
 		{"3 Months", 3},
 		{"6 Months", 6},
 		{"1 Year", 12},
+		{"2 Years", 24},
+		{"5 Years", 60},
 	}
 
 	for _, period := range periods {
-		startDate := now.AddDate(0, -period.months, 0)
+		targetDate := now.AddDate(0, -period.months, 0)
 
-		// Find closest available date
+		// Find closest available date in PAST (not future)
 		var closestDate string
 		var closestPrice float64
-		minDiff := time.Hour * 24 * 365 // 1 year
+		minDiff := time.Hour * 24 * 365 * 10 // 10 years max
 
 		for dateStr, price := range prices {
 			priceDate, err := time.Parse("2006-01-02", dateStr)
 			if err != nil {
 				continue
 			}
-			diff := startDate.Sub(priceDate)
+
+			// Only consider dates BEFORE or ON the target date
+			if priceDate.After(targetDate) {
+				continue
+			}
+
+			diff := targetDate.Sub(priceDate)
 			if diff < 0 {
 				diff = -diff
 			}
@@ -562,15 +570,21 @@ func (r *RealTimeAgents) CalculateHistoricalReturns(symbol string, currentPrice 
 			}
 		}
 
-		if closestPrice > 0 {
-			returnPct := ((currentPrice - closestPrice) / closestPrice) * 100
+		// Only add if we found valid historical data
+		if closestPrice > 0 && closestDate != "" {
+			// Calculate ACTUAL return from past to now
+			returnAmount := currentPrice - closestPrice
+			returnPct := (returnAmount / closestPrice) * 100
+
 			returns = append(returns, map[string]interface{}{
-				"period":      period.name,
-				"start_date":  closestDate,
-				"end_date":    now.Format("2006-01-02"),
-				"start_price": closestPrice,
-				"end_price":   currentPrice,
-				"return_pct":  returnPct,
+				"period":        period.name,
+				"start_date":    closestDate,
+				"end_date":      now.Format("2006-01-02"),
+				"start_price":   closestPrice,
+				"end_price":     currentPrice,
+				"return_amount": returnAmount,
+				"return_pct":    returnPct,
+				"is_positive":   returnPct >= 0,
 			})
 		}
 	}
@@ -578,9 +592,29 @@ func (r *RealTimeAgents) CalculateHistoricalReturns(symbol string, currentPrice 
 	return returns
 }
 
-// CalculateInvestmentProjections calculates future value projections
-func (r *RealTimeAgents) CalculateInvestmentProjections(currentPrice float64, expectedReturnPct float64) []map[string]interface{} {
+// CalculateInvestmentProjections calculates future value based on historical average returns
+func (r *RealTimeAgents) CalculateInvestmentProjections(symbol string, currentPrice float64, historicalReturns []map[string]interface{}) []map[string]interface{} {
 	projections := []map[string]interface{}{}
+
+	// Calculate average annual return from REAL historical data
+	var totalReturn float64
+	var count int
+	for _, ret := range historicalReturns {
+		if returnPct, ok := ret["return_pct"].(float64); ok {
+			totalReturn += returnPct
+			count++
+		}
+	}
+
+	// Use historical average or conservative 8% if no data
+	annualReturnRate := 0.08
+	avgReturnPct := 8.0
+	if count > 0 {
+		avgReturnPct = totalReturn / float64(count)
+		annualReturnRate = avgReturnPct / 100.0
+	}
+
+	now := time.Now()
 
 	// Define projection periods
 	periods := []struct {
@@ -595,23 +629,26 @@ func (r *RealTimeAgents) CalculateInvestmentProjections(currentPrice float64, ex
 		{"5 Years", 60},
 	}
 
-	// Annual return rate (convert expected return to annual)
-	annualReturnRate := expectedReturnPct / 100.0
-
 	for _, period := range periods {
-		// Calculate compound return
+		// Calculate compound return based on historical average
 		years := float64(period.months) / 12.0
 		futurePrice := currentPrice * math.Pow(1+annualReturnRate, years)
 		returnAmount := futurePrice - currentPrice
 		returnPct := (returnAmount / currentPrice) * 100
 
+		futureDate := now.AddDate(0, period.months, 0)
+
 		projections = append(projections, map[string]interface{}{
 			"period":        period.name,
 			"months":        period.months,
+			"start_date":    now.Format("2006-01-02"),
+			"end_date":      futureDate.Format("2006-01-02"),
 			"current_price": currentPrice,
 			"future_price":  futurePrice,
 			"return_amount": returnAmount,
 			"return_pct":    returnPct,
+			"is_positive":   returnPct >= 0,
+			"based_on":      fmt.Sprintf("Historical avg: %.1f%% annual return", avgReturnPct),
 		})
 	}
 
