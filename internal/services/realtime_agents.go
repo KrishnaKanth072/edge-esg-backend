@@ -165,7 +165,15 @@ type StockData struct {
 func (r *RealTimeAgents) GetStockPrice(symbol string) (*StockData, error) {
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s", symbol)
 
-	resp, err := r.httpClient.Get(url) // #nosec G107 G704
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add User-Agent to avoid being blocked
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+
+	resp, err := r.httpClient.Do(req) // #nosec G107 G704
 	if err != nil {
 		return nil, fmt.Errorf("yahoo finance request failed: %w", err)
 	}
