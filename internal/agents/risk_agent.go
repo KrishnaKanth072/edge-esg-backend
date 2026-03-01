@@ -32,45 +32,47 @@ func (r *RiskAgent) AssessRisk(ctx context.Context, req *RiskAssessmentRequest) 
 		Reasons: []string{},
 	}
 
-	// Calculate base risk score (0-100, lower is better)
-	baseRisk := 50.0
+	// Calculate risk score (0-100, lower is better)
+	// Start from 0 and add risk factors
+	riskScore := 0.0
 
-	// ESG Score Impact (0-10 scale, higher is better)
-	// Convert to risk: low ESG = high risk
-	esgRisk := (10.0 - req.ESGScore) * 5.0 // 0-50 points
-	baseRisk += esgRisk
+	// ESG Score Impact (0-10 scale, higher ESG = lower risk)
+	// Low ESG adds risk: (10 - ESG) × 5 = 0-50 points
+	esgRisk := (10.0 - req.ESGScore) * 5.0
+	riskScore += esgRisk
 
-	// News Sentiment Impact (0-1 scale, higher is better)
-	// Convert to risk: negative sentiment = high risk
-	sentimentRisk := (1.0 - req.NewsSentiment) * 30.0 // 0-30 points
-	baseRisk += sentimentRisk
+	// News Sentiment Impact (0-1 scale, higher sentiment = lower risk)
+	// Negative sentiment adds risk: (1 - sentiment) × 40 = 0-40 points
+	sentimentRisk := (1.0 - req.NewsSentiment) * 40.0
+	riskScore += sentimentRisk
 
 	// Stock Volatility Impact (if provided)
+	// High volatility adds risk: volatility × 30 = 0-30 points
 	if req.StockVolatility > 0 {
-		volatilityRisk := req.StockVolatility * 20.0 // 0-20 points
-		baseRisk += volatilityRisk
+		volatilityRisk := req.StockVolatility * 30.0
+		riskScore += volatilityRisk
 	}
 
 	// Clamp to 0-100
-	if baseRisk < 0 {
-		baseRisk = 0
+	if riskScore < 0 {
+		riskScore = 0
 	}
-	if baseRisk > 100 {
-		baseRisk = 100
+	if riskScore > 100 {
+		riskScore = 100
 	}
 
-	response.RiskScore = baseRisk
+	response.RiskScore = riskScore
 
 	// Determine risk level and action
-	if baseRisk >= 75 {
+	if riskScore >= 70 {
 		response.RiskLevel = "CRITICAL"
 		response.Action = "REJECT"
 		response.Reasons = append(response.Reasons, "Critical risk level detected")
-	} else if baseRisk >= 60 {
+	} else if riskScore >= 50 {
 		response.RiskLevel = "HIGH"
 		response.Action = "REJECT"
 		response.Reasons = append(response.Reasons, "High risk level")
-	} else if baseRisk >= 40 {
+	} else if riskScore >= 30 {
 		response.RiskLevel = "MEDIUM"
 		response.Action = "REVIEW"
 		response.Reasons = append(response.Reasons, "Moderate risk requires review")
