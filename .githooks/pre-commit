@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo "🔍 Running pre-commit security checks..."
+
+# Check for hardcoded passwords in Go files
+if git diff --cached --name-only | grep "\.go$" | xargs grep -n "password\s*=\s*['\"]" 2>/dev/null; then
+    echo "❌ ERROR: Hardcoded passwords detected in Go files!"
+    echo "Please use environment variables or secure secret management."
+    exit 1
+fi
+
+# Check for common secret patterns
+if git diff --cached --name-only | grep "\.go$" | xargs grep -nE "(api_key|apikey|secret_key|private_key)\s*=\s*['\"][^'\"]+['\"]" 2>/dev/null; then
+    echo "❌ ERROR: Potential hardcoded secrets detected!"
+    exit 1
+fi
+
+echo "✅ Security checks passed"
+exit 0
