@@ -60,12 +60,12 @@ func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.Anal
 	sentiment, newsErr := o.realtimeAgents.GetNewsSentiment(req.CompanyName)
 
 	// If BOTH stock price AND news fail, company likely doesn't exist
-	if (stockErr != nil || currentPrice == 0) && (newsErr != nil || sentiment == 0) {
+	if (stockErr != nil || currentPrice == 0) && newsErr != nil {
 		return nil, fmt.Errorf("company '%s' not found - unable to retrieve market data or news. Please check the company name and try again", req.CompanyName)
 	}
 
-	// If only news failed, use neutral sentiment
-	if newsErr != nil || sentiment == 0 {
+	// If only news failed but we have stock price, continue with neutral sentiment
+	if newsErr != nil {
 		sentiment = 0.5 // Neutral default
 	}
 
@@ -213,13 +213,13 @@ func (o *Orchestrator) ComparePortfolio(ctx context.Context, req *dtos.Portfolio
 
 		sentiment, newsErr := o.realtimeAgents.GetNewsSentiment(companyName)
 
-		// Skip invalid companies
-		if (stockErr != nil || currentPrice == 0) && (newsErr != nil || sentiment == 0) {
+		// Skip invalid companies (both stock and news failed)
+		if (stockErr != nil || currentPrice == 0) && newsErr != nil {
 			invalidCompanies = append(invalidCompanies, companyName)
 			continue
 		}
 
-		if sentiment == 0 {
+		if newsErr != nil {
 			sentiment = 0.5
 		}
 

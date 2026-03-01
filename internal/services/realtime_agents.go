@@ -123,7 +123,7 @@ func (r *RealTimeAgents) GetNewsSentiment(company string) (float64, error) {
 
 	articles, ok := newsData["articles"].([]interface{})
 	if !ok || len(articles) == 0 {
-		return 0.5, nil
+		return 0, fmt.Errorf("no news articles found for company: %s", company)
 	}
 
 	// Sentiment analysis keywords
