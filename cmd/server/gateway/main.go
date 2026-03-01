@@ -33,6 +33,10 @@ func main() {
 	// Initialize services
 	orchestrator := services.NewOrchestrator()
 	analyzeHandler := handlers.NewAnalyzeHandler(orchestrator)
+	wsHub := handlers.NewWSHub()
+
+	// Start WebSocket hub
+	go wsHub.Run()
 
 	// Setup Gin router
 	r := gin.Default()
@@ -45,6 +49,7 @@ func main() {
 
 	// Public routes
 	r.GET("/health", handlers.HealthCheck)
+	r.GET("/ws", wsHub.HandleWebSocket)
 
 	// Protected routes (Keycloak auth disabled for demo)
 	api := r.Group("/api/v1")
