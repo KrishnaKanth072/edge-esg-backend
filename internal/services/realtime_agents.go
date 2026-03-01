@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"strings"
@@ -575,4 +576,44 @@ func (r *RealTimeAgents) CalculateHistoricalReturns(symbol string, currentPrice 
 	}
 
 	return returns
+}
+
+// CalculateInvestmentProjections calculates future value projections
+func (r *RealTimeAgents) CalculateInvestmentProjections(currentPrice float64, expectedReturnPct float64) []map[string]interface{} {
+	projections := []map[string]interface{}{}
+
+	// Define projection periods
+	periods := []struct {
+		name   string
+		months int
+	}{
+		{"1 Month", 1},
+		{"3 Months", 3},
+		{"6 Months", 6},
+		{"1 Year", 12},
+		{"2 Years", 24},
+		{"5 Years", 60},
+	}
+
+	// Annual return rate (convert expected return to annual)
+	annualReturnRate := expectedReturnPct / 100.0
+
+	for _, period := range periods {
+		// Calculate compound return
+		years := float64(period.months) / 12.0
+		futurePrice := currentPrice * math.Pow(1+annualReturnRate, years)
+		returnAmount := futurePrice - currentPrice
+		returnPct := (returnAmount / currentPrice) * 100
+
+		projections = append(projections, map[string]interface{}{
+			"period":        period.name,
+			"months":        period.months,
+			"current_price": currentPrice,
+			"future_price":  futurePrice,
+			"return_amount": returnAmount,
+			"return_pct":    returnPct,
+		})
+	}
+
+	return projections
 }

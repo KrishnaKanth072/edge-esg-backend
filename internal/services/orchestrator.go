@@ -164,6 +164,9 @@ func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.Anal
 	// Step 9: Get historical returns for investment analysis
 	historicalReturns := o.realtimeAgents.CalculateHistoricalReturns(stockSymbol, currentPrice)
 
+	// Step 10: Calculate investment projections
+	investmentProjections := o.realtimeAgents.CalculateInvestmentProjections(currentPrice, tradingResult.PriceChangePercent)
+
 	// Build comprehensive response
 	response := &dtos.AnalyzeResponse{
 		ESGScore:   fmt.Sprintf("%.1f/10", esgResult.OverallScore),
@@ -176,11 +179,12 @@ func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.Anal
 			PriceChange:  fmt.Sprintf("%.1f%%", tradingResult.PriceChangePercent),
 			Confidence:   tradingResult.Confidence,
 		},
-		HistoricalReturns: historicalReturns,
-		RiskReasons:       riskResult.Reasons,
-		ProcessingTimeMs:  time.Since(startTime).Milliseconds(),
-		AuditHash:         auditResult.TransactionHash,
-		Timestamp:         time.Now(),
+		HistoricalReturns:     historicalReturns,
+		InvestmentProjections: investmentProjections,
+		RiskReasons:           riskResult.Reasons,
+		ProcessingTimeMs:      time.Since(startTime).Milliseconds(),
+		AuditHash:             auditResult.TransactionHash,
+		Timestamp:             time.Now(),
 	}
 
 	return response, nil
