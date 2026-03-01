@@ -1,4 +1,19 @@
-.PHONY: up down build test deploy clean
+.PHONY: up down build test deploy clean setup security-check
+
+setup:
+	@echo "🔧 Setting up development environment..."
+	git config core.hooksPath .githooks
+	chmod +x .githooks/pre-commit
+	@echo "✅ Git hooks installed"
+	@echo "✅ Run 'make security-check' to verify your code"
+
+security-check:
+	@echo "🔍 Running security checks..."
+	@if grep -r "password\s*=\s*['\"]" --include="*.go" --exclude-dir=vendor --exclude="*_test.go" .; then \
+		echo "❌ Hardcoded passwords found!"; \
+		exit 1; \
+	fi
+	@echo "✅ Security checks passed"
 
 up:
 	docker-compose up -d
