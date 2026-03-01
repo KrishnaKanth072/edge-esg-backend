@@ -1,0 +1,242 @@
+syntax = "proto3";
+
+package agents;
+
+option go_package = "github.com/edgeesg/edge-esg-backend/proto/agents";
+
+// ============================================
+// Risk Agent Service
+// ============================================
+service RiskAgent {
+  rpc AssessRisk(RiskAssessmentRequest) returns (RiskAssessmentResponse);
+}
+
+message RiskAssessmentRequest {
+  string company_name = 1;
+  double esg_score = 2;
+  double news_sentiment = 3;
+  double stock_volatility = 4;
+}
+
+message RiskAssessmentResponse {
+  string action = 1; // APPROVE/REJECT/REVIEW
+  repeated string reasons = 2;
+  double risk_score = 3; // 0-100
+  string risk_level = 4; // LOW/MEDIUM/HIGH/CRITICAL
+}
+
+// ============================================
+// Trading Agent Service
+// ============================================
+service TradingAgent {
+  rpc GenerateSignal(TradingSignalRequest) returns (TradingSignalResponse);
+}
+
+message TradingSignalRequest {
+  string company_name = 1;
+  string symbol = 2;
+  double current_price = 3;
+  double esg_score = 4;
+  double sentiment = 5;
+}
+
+message TradingSignalResponse {
+  string action = 1; // BUY/SELL/HOLD
+  string symbol = 2;
+  double current_price = 3;
+  double target_price = 4;
+  double price_change_percent = 5;
+  double confidence = 6;
+  string reasoning = 7;
+}
+
+// ============================================
+// Compliance Agent Service
+// ============================================
+service ComplianceAgent {
+  rpc CheckCompliance(ComplianceRequest) returns (ComplianceResponse);
+}
+
+message ComplianceRequest {
+  string company_name = 1;
+  string industry = 2;
+  string region = 3;
+}
+
+message ComplianceResponse {
+  bool is_compliant = 1;
+  repeated string violations = 2;
+  repeated string regulations = 3;
+  double compliance_score = 4; // 0-100
+}
+
+// ============================================
+// ESG Scoring Agent Service
+// ============================================
+service ESGScoringAgent {
+  rpc CalculateESG(ESGCalculationRequest) returns (ESGCalculationResponse);
+}
+
+message ESGCalculationRequest {
+  string company_name = 1;
+  double news_sentiment = 2;
+  string industry = 3;
+}
+
+message ESGCalculationResponse {
+  double overall_score = 1; // 0-10
+  double environmental = 2;
+  double social = 3;
+  double governance = 4;
+  repeated string factors = 5;
+}
+
+// ============================================
+// Quantum Agent Service (Advanced Analytics)
+// ============================================
+service QuantumAgent {
+  rpc AnalyzePattern(QuantumAnalysisRequest) returns (QuantumAnalysisResponse);
+}
+
+message QuantumAnalysisRequest {
+  string company_name = 1;
+  repeated double historical_prices = 2;
+  double esg_score = 3;
+}
+
+message QuantumAnalysisResponse {
+  double predicted_volatility = 1;
+  double market_correlation = 2;
+  repeated string insights = 3;
+  double confidence = 4;
+}
+
+// ============================================
+// Consensus Agent Service
+// ============================================
+service ConsensusAgent {
+  rpc ReachConsensus(ConsensusRequest) returns (ConsensusResponse);
+}
+
+message ConsensusRequest {
+  string company_name = 1;
+  repeated AgentDecision agent_decisions = 2;
+}
+
+message AgentDecision {
+  string agent_name = 1;
+  string decision = 2;
+  double confidence = 3;
+  string reasoning = 4;
+}
+
+message ConsensusResponse {
+  string final_decision = 1;
+  double consensus_confidence = 2;
+  repeated string supporting_agents = 3;
+  repeated string dissenting_agents = 4;
+}
+
+// ============================================
+// Blockchain Agent Service
+// ============================================
+service BlockchainAgent {
+  rpc RecordAudit(AuditRecordRequest) returns (AuditRecordResponse);
+  rpc VerifyAudit(AuditVerifyRequest) returns (AuditVerifyResponse);
+}
+
+message AuditRecordRequest {
+  string company_name = 1;
+  string analysis_data = 2;
+  int64 timestamp = 3;
+}
+
+message AuditRecordResponse {
+  string transaction_hash = 1;
+  string block_hash = 2;
+  bool success = 3;
+}
+
+message AuditVerifyRequest {
+  string transaction_hash = 1;
+}
+
+message AuditVerifyResponse {
+  bool is_valid = 1;
+  string data = 2;
+  int64 timestamp = 3;
+}
+
+// ============================================
+// Digital Twin Agent Service
+// ============================================
+service DigitalTwinAgent {
+  rpc CreateTwin(TwinCreationRequest) returns (TwinCreationResponse);
+  rpc SimulateScenario(ScenarioRequest) returns (ScenarioResponse);
+}
+
+message TwinCreationRequest {
+  string company_name = 1;
+  double esg_score = 2;
+  double market_cap = 3;
+  string industry = 4;
+}
+
+message TwinCreationResponse {
+  string twin_id = 1;
+  string model_data = 2;
+  bool success = 3;
+}
+
+message ScenarioRequest {
+  string twin_id = 1;
+  string scenario_type = 2; // CARBON_TAX, REGULATION_CHANGE, etc.
+  double impact_factor = 3;
+}
+
+message ScenarioResponse {
+  double predicted_esg_change = 1;
+  double predicted_value_change = 2;
+  repeated string recommendations = 3;
+}
+
+// ============================================
+// Optimization Agent Service
+// ============================================
+service OptimizationAgent {
+  rpc OptimizePortfolio(PortfolioRequest) returns (PortfolioResponse);
+}
+
+message PortfolioRequest {
+  repeated string companies = 1;
+  repeated double esg_scores = 2;
+  repeated double expected_returns = 3;
+  double risk_tolerance = 4;
+}
+
+message PortfolioResponse {
+  repeated double optimal_weights = 1;
+  double expected_return = 2;
+  double portfolio_risk = 3;
+  double esg_score = 4;
+}
+
+// ============================================
+// Regulation Agent Service
+// ============================================
+service RegulationAgent {
+  rpc AnalyzeRegulations(RegulationRequest) returns (RegulationResponse);
+}
+
+message RegulationRequest {
+  string company_name = 1;
+  string region = 2;
+  string industry = 3;
+}
+
+message RegulationResponse {
+  repeated string applicable_regulations = 1;
+  repeated string upcoming_changes = 2;
+  double regulatory_risk_score = 3;
+  repeated string recommendations = 4;
+}

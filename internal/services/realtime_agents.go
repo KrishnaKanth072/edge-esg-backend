@@ -305,6 +305,11 @@ func (r *RealTimeAgents) GenerateTradingSignal(esgScore, sentiment, currentPrice
 		signal = "SELL"
 		priceChange = -(10.0 + (4.0-esgScore)*3.0)
 		targetPrice = currentPrice * (1 + priceChange/100)
+	} else {
+		// HOLD: Small price movement based on ESG and sentiment
+		// Range: -5% to +10% based on score
+		priceChange = (esgScore-5.0)*2.0 + (sentiment-0.5)*8.0
+		targetPrice = currentPrice * (1 + priceChange/100)
 	}
 
 	return signal, targetPrice, priceChange
@@ -313,7 +318,9 @@ func (r *RealTimeAgents) GenerateTradingSignal(esgScore, sentiment, currentPrice
 // Assess financing risk
 func (r *RealTimeAgents) AssessRisk(esgScore, sentiment float64) (string, []string) {
 	reasons := []string{}
+	positiveReasons := []string{}
 
+	// Negative factors
 	if esgScore < 4.0 {
 		reasons = append(reasons, "Low ESG score indicates sustainability risks")
 	}
@@ -324,18 +331,35 @@ func (r *RealTimeAgents) AssessRisk(esgScore, sentiment float64) (string, []stri
 		reasons = append(reasons, "High regulatory compliance risk")
 	}
 
+	// Positive factors (based on actual scores)
+	if esgScore >= 7.0 {
+		positiveReasons = append(positiveReasons, "Excellent ESG score ("+fmt.Sprintf("%.1f", esgScore)+"/10)")
+	} else if esgScore >= 5.5 {
+		positiveReasons = append(positiveReasons, "Good ESG score ("+fmt.Sprintf("%.1f", esgScore)+"/10)")
+	} else if esgScore >= 4.0 {
+		positiveReasons = append(positiveReasons, "Moderate ESG score ("+fmt.Sprintf("%.1f", esgScore)+"/10)")
+	}
+
+	if sentiment >= 0.65 {
+		positiveReasons = append(positiveReasons, "Strong positive news sentiment")
+	} else if sentiment >= 0.5 {
+		positiveReasons = append(positiveReasons, "Neutral to positive news sentiment")
+	} else if sentiment >= 0.4 {
+		positiveReasons = append(positiveReasons, "Mixed news sentiment")
+	}
+
+	// Determine action
 	action := "APPROVE"
 	if len(reasons) >= 2 {
 		action = "REJECT"
+		return action, reasons
 	} else if len(reasons) == 1 {
 		action = "REVIEW"
+		return action, append(reasons, positiveReasons...)
 	}
 
-	if len(reasons) == 0 {
-		reasons = append(reasons, "Strong ESG profile", "Positive market sentiment")
-	}
-
-	return action, reasons
+	// No negative reasons - show positive analysis
+	return action, positiveReasons
 }
 
 // Calculate confidence based on data availability
