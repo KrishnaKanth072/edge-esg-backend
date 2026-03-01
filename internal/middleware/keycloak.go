@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/gin-gonic/gin"
 	"github.com/edgeesg/edge-esg-backend/internal/error_codes"
+	"github.com/gin-gonic/gin"
 )
 
 type KeycloakMiddleware struct {
