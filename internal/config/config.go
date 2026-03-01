@@ -41,10 +41,8 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("ENCRYPTION_KEY must be 64 hex characters (32 bytes)")
 	}
 
-	// Enforce TLS in production
-	if config.Environment == "production" && !config.TLSEnabled {
-		return nil, fmt.Errorf("TLS must be enabled in production environment")
-	}
+	// TLS is optional - Render provides TLS at the edge
+	// No need to enforce TLS at application level
 
 	return config, nil
 }
