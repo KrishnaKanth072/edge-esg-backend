@@ -99,8 +99,7 @@ func (r *RealTimeAgents) GetNewsSentiment(company string) (float64, error) {
 	url := fmt.Sprintf("https://newsapi.org/v2/everything?q=%s&sortBy=publishedAt&language=en&pageSize=20&apiKey=%s",
 		strings.ReplaceAll(company, " ", "+"), apiKey)
 
-	// #nosec G107 - URL uses trusted domain (newsapi.org) only
-	resp, err := r.httpClient.Get(url)
+	resp, err := r.httpClient.Get(url) // #nosec G107
 	if err != nil {
 		return 0.5, err
 	}
@@ -163,8 +162,7 @@ type StockData struct {
 func (r *RealTimeAgents) GetStockPrice(symbol string) (*StockData, error) {
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s", symbol)
 
-	// #nosec G107 - URL uses trusted domain (yahoo.com) only
-	resp, err := r.httpClient.Get(url)
+	resp, err := r.httpClient.Get(url) // #nosec G107
 	if err != nil {
 		return nil, err
 	}
