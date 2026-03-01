@@ -43,9 +43,29 @@ func NewOrchestrator() *Orchestrator {
 func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.AnalyzeRequest) (*dtos.AnalyzeResponse, error) {
 	startTime := time.Now()
 
-	// Step 1: Get real-time market data
-	sentiment, err := o.realtimeAgents.GetNewsSentiment(req.CompanyName)
-	if err != nil {
+	// Step 1: Validate company exists by checking if we can get real data
+	stockSymbol := o.realtimeAgents.GuessStockSymbol(req.CompanyName)
+
+	// Try to get stock price
+	stockData, stockErr := o.realtimeAgents.GetStockPrice(stockSymbol)
+	var currentPrice float64
+	if stockErr != nil || stockData == nil {
+		// Try Alpha Vantage as fallback
+		currentPrice, stockErr = o.realtimeAgents.GetAlphaVantagePrice(stockSymbol)
+	} else {
+		currentPrice = stockData.Price
+	}
+
+	// Try to get news
+	sentiment, newsErr := o.realtimeAgents.GetNewsSentiment(req.CompanyName)
+
+	// If BOTH stock price AND news fail, company likely doesn't exist
+	if (stockErr != nil || currentPrice == 0) && (newsErr != nil || sentiment == 0) {
+		return nil, fmt.Errorf("company '%s' not found - unable to retrieve market data or news. Please check the company name and try again", req.CompanyName)
+	}
+
+	// If only news failed, use neutral sentiment
+	if newsErr != nil || sentiment == 0 {
 		sentiment = 0.5 // Neutral default
 	}
 
@@ -60,15 +80,10 @@ func (o *Orchestrator) Execute8LayerPipeline(ctx context.Context, req *dtos.Anal
 		return nil, fmt.Errorf("ESG scoring failed: %w", err)
 	}
 
-	// Step 3: Get stock data
-	stockSymbol := o.realtimeAgents.GuessStockSymbol(req.CompanyName)
-	stockData, _ := o.realtimeAgents.GetStockPrice(stockSymbol)
-	currentPrice := 0.0
-	if stockData != nil {
-		currentPrice = stockData.Price
-	} else {
-		// Try Alpha Vantage fallback
-		currentPrice, _ = o.realtimeAgents.GetAlphaVantagePrice(stockSymbol)
+	// Step 3: Get stock data (already validated above)
+	if currentPrice == 0 {
+		// Last attempt if both previous checks failed
+		currentPrice = 100.0 // Fallback for analysis to continue
 	}
 
 	// Step 4: Risk Agent - Assess financing risk
@@ -178,17 +193,37 @@ func (o *Orchestrator) ComparePortfolio(ctx context.Context, req *dtos.Portfolio
 	}
 
 	// Analyze each company
-	esgScores := make([]float64, len(req.Companies))
-	expectedReturns := make([]float64, len(req.Companies))
+	esgScores := make([]float64, 0, len(req.Companies))
+	expectedReturns := make([]float64, 0, len(req.Companies))
+	validCompanies := make([]string, 0, len(req.Companies))
 	bestESGScore := 0.0
 	lowestRisk := 100.0
+	invalidCompanies := make([]string, 0)
 
-	for i, companyName := range req.Companies {
-		// Get real-time data
-		sentiment, _ := o.realtimeAgents.GetNewsSentiment(companyName)
+	for _, companyName := range req.Companies {
+		// Validate company by checking if we can get real data
+		stockSymbol := o.realtimeAgents.GuessStockSymbol(companyName)
+		stockData, stockErr := o.realtimeAgents.GetStockPrice(stockSymbol)
+		var currentPrice float64
+		if stockErr != nil || stockData == nil {
+			currentPrice, stockErr = o.realtimeAgents.GetAlphaVantagePrice(stockSymbol)
+		} else {
+			currentPrice = stockData.Price
+		}
+
+		sentiment, newsErr := o.realtimeAgents.GetNewsSentiment(companyName)
+
+		// Skip invalid companies
+		if (stockErr != nil || currentPrice == 0) && (newsErr != nil || sentiment == 0) {
+			invalidCompanies = append(invalidCompanies, companyName)
+			continue
+		}
+
 		if sentiment == 0 {
 			sentiment = 0.5
 		}
+
+		validCompanies = append(validCompanies, companyName)
 
 		// ESG Scoring
 		esgReq := &agents.ESGCalculationRequest{
@@ -211,15 +246,6 @@ func (o *Orchestrator) ComparePortfolio(ctx context.Context, req *dtos.Portfolio
 		riskResult, _ := o.riskAgent.AssessRisk(ctx, riskReq)
 
 		// Trading Signal
-		stockSymbol := o.realtimeAgents.GuessStockSymbol(companyName)
-		stockData, _ := o.realtimeAgents.GetStockPrice(stockSymbol)
-		currentPrice := 0.0
-		if stockData != nil {
-			currentPrice = stockData.Price
-		} else {
-			currentPrice, _ = o.realtimeAgents.GetAlphaVantagePrice(stockSymbol)
-		}
-
 		tradingReq := &agents.TradingSignalRequest{
 			CompanyName:  companyName,
 			Symbol:       stockSymbol,
@@ -269,8 +295,8 @@ func (o *Orchestrator) ComparePortfolio(ctx context.Context, req *dtos.Portfolio
 		response.Companies = append(response.Companies, comparison)
 
 		// Track for optimization
-		esgScores[i] = esgResult.OverallScore
-		expectedReturns[i] = tradingResult.PriceChangePercent
+		esgScores = append(esgScores, esgResult.OverallScore)
+		expectedReturns = append(expectedReturns, tradingResult.PriceChangePercent)
 
 		// Track best performers
 		if esgResult.OverallScore > bestESGScore {
@@ -283,6 +309,20 @@ func (o *Orchestrator) ComparePortfolio(ctx context.Context, req *dtos.Portfolio
 		}
 	}
 
+	// Check if we have any valid companies
+	if len(response.Companies) == 0 {
+		if len(invalidCompanies) > 0 {
+			return nil, fmt.Errorf("no valid companies found. Invalid companies: %v. Please check company names and try again", invalidCompanies)
+		}
+		return nil, fmt.Errorf("failed to analyze any companies")
+	}
+
+	// Warn about invalid companies if some were valid
+	if len(invalidCompanies) > 0 {
+		// Could add a warning field to response here
+		fmt.Printf("Warning: Skipped invalid companies: %v\n", invalidCompanies)
+	}
+
 	// Portfolio Optimization
 	if len(response.Companies) > 0 {
 		riskTolerance := req.RiskTolerance
@@ -291,7 +331,7 @@ func (o *Orchestrator) ComparePortfolio(ctx context.Context, req *dtos.Portfolio
 		}
 
 		portfolioReq := &agents.PortfolioRequest{
-			Companies:       req.Companies,
+			Companies:       validCompanies,
 			ESGScores:       esgScores,
 			ExpectedReturns: expectedReturns,
 			RiskTolerance:   riskTolerance,
