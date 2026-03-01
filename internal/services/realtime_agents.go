@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -89,8 +90,12 @@ func (r *RealTimeAgents) AnalyzeCompany(ctx context.Context, company string) (*C
 
 // Get real news sentiment from NewsAPI
 func (r *RealTimeAgents) GetNewsSentiment(company string) (float64, error) {
-	// Free tier NewsAPI - users should add their own key
-	apiKey := "demo" // Replace with real key from https://newsapi.org
+	// Get API key from environment
+	apiKey := os.Getenv("NEWS_API_KEY")
+	if apiKey == "" {
+		apiKey = "demo" // Fallback to demo (won't work)
+	}
+
 	url := fmt.Sprintf("https://newsapi.org/v2/everything?q=%s&sortBy=publishedAt&language=en&pageSize=20&apiKey=%s",
 		strings.ReplaceAll(company, " ", "+"), apiKey)
 
@@ -197,23 +202,39 @@ func (r *RealTimeAgents) CalculateESGScore(company string, sentiment float64) fl
 
 	// Green/sustainable companies get bonus
 	if strings.Contains(companyLower, "solar") || strings.Contains(companyLower, "wind") ||
-		strings.Contains(companyLower, "renewable") || strings.Contains(companyLower, "green") {
-		baseScore += 2.0
+		strings.Contains(companyLower, "renewable") || strings.Contains(companyLower, "green") ||
+		strings.Contains(companyLower, "clean") || strings.Contains(companyLower, "sustainable") {
+		baseScore += 2.5
 	}
 
 	// Tech companies generally score well
-	if strings.Contains(companyLower, "tech") || strings.Contains(companyLower, "software") {
-		baseScore += 1.0
+	if strings.Contains(companyLower, "tech") || strings.Contains(companyLower, "software") ||
+		strings.Contains(companyLower, "apple") || strings.Contains(companyLower, "microsoft") ||
+		strings.Contains(companyLower, "google") || strings.Contains(companyLower, "tesla") {
+		baseScore += 1.5
+	}
+
+	// Manufacturing/Industrial - moderate
+	if strings.Contains(companyLower, "steel") || strings.Contains(companyLower, "motors") ||
+		strings.Contains(companyLower, "tata") || strings.Contains(companyLower, "reliance") {
+		baseScore += 0.5
 	}
 
 	// Oil/coal companies score lower
 	if strings.Contains(companyLower, "oil") || strings.Contains(companyLower, "coal") ||
-		strings.Contains(companyLower, "petroleum") {
-		baseScore -= 2.0
+		strings.Contains(companyLower, "petroleum") || strings.Contains(companyLower, "exxon") ||
+		strings.Contains(companyLower, "chevron") || strings.Contains(companyLower, "shell") {
+		baseScore -= 2.5
 	}
 
-	// Adjust by sentiment
-	baseScore += (sentiment - 0.5) * 4.0
+	// Tobacco/weapons - very low
+	if strings.Contains(companyLower, "tobacco") || strings.Contains(companyLower, "cigarette") ||
+		strings.Contains(companyLower, "defense") || strings.Contains(companyLower, "weapons") {
+		baseScore -= 3.0
+	}
+
+	// Adjust by sentiment (bigger impact)
+	baseScore += (sentiment - 0.5) * 6.0
 
 	// Clamp to 0-10 range
 	if baseScore < 0 {
@@ -292,19 +313,29 @@ func (r *RealTimeAgents) CalculateConfidence(sentiment, price float64) int {
 func (r *RealTimeAgents) GuessStockSymbol(company string) string {
 	// Common mappings
 	mappings := map[string]string{
-		"tata steel": "TATASTEEL.NS",
-		"reliance":   "RELIANCE.NS",
-		"infosys":    "INFY",
-		"wipro":      "WIT",
-		"hdfc":       "HDFCBANK.NS",
-		"icici":      "ICICIBANK.NS",
-		"suzlon":     "SUZLON.NS",
-		"adani":      "ADANIENT.NS",
-		"apple":      "AAPL",
-		"microsoft":  "MSFT",
-		"google":     "GOOGL",
-		"amazon":     "AMZN",
-		"tesla":      "TSLA",
+		"tata steel":  "TATASTEEL.NS",
+		"tata motors": "TATAMOTORS.NS",
+		"tata":        "TCS.NS",
+		"reliance":    "RELIANCE.NS",
+		"infosys":     "INFY",
+		"wipro":       "WIT",
+		"hdfc":        "HDFCBANK.NS",
+		"icici":       "ICICIBANK.NS",
+		"suzlon":      "SUZLON.NS",
+		"adani":       "ADANIENT.NS",
+		"apple":       "AAPL",
+		"microsoft":   "MSFT",
+		"google":      "GOOGL",
+		"amazon":      "AMZN",
+		"tesla":       "TSLA",
+		"exxon":       "XOM",
+		"chevron":     "CVX",
+		"shell":       "SHEL",
+		"bp":          "BP",
+		"meta":        "META",
+		"facebook":    "META",
+		"netflix":     "NFLX",
+		"nvidia":      "NVDA",
 	}
 
 	companyLower := strings.ToLower(company)
