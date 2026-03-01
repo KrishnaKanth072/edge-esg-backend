@@ -66,13 +66,20 @@ func (r *RealTimeAgents) AnalyzeCompany(ctx context.Context, company string) (*C
 	// 3. Determine stock symbol
 	analysis.StockSymbol = r.GuessStockSymbol(company)
 
-	// 4. Get real stock price if possible
+	// 4. Get real stock price - try Yahoo first, then Alpha Vantage
 	stockData, err := r.GetStockPrice(analysis.StockSymbol)
 	if err == nil {
 		analysis.CurrentPrice = stockData.Price
 	} else {
-		// Log error but continue with $0 price
-		fmt.Printf("Failed to get stock price for %s: %v\n", analysis.StockSymbol, err)
+		// Try Alpha Vantage as fallback
+		price, err2 := r.GetAlphaVantagePrice(analysis.StockSymbol)
+		if err2 == nil {
+			analysis.CurrentPrice = price
+		} else {
+			// Log both errors but continue with $0 price
+			fmt.Printf("Failed to get stock price for %s: Yahoo=%v, AlphaVantage=%v\n",
+				analysis.StockSymbol, err, err2)
+		}
 	}
 
 	// 5. Generate trading signal based on ESG + sentiment
@@ -383,4 +390,49 @@ func (r *RealTimeAgents) GuessStockSymbol(company string) string {
 
 	// Default fallback
 	return strings.ToUpper(strings.ReplaceAll(company, " ", "")) + ".NS"
+}
+
+// Get stock price from Alpha Vantage (fallback)
+func (r *RealTimeAgents) GetAlphaVantagePrice(symbol string) (float64, error) {
+	apiKey := os.Getenv("ALPHA_VANTAGE_KEY")
+	if apiKey == "" {
+		return 0, fmt.Errorf("ALPHA_VANTAGE_KEY not set")
+	}
+
+	// Alpha Vantage uses different symbols (no .NS suffix for Indian stocks)
+	cleanSymbol := strings.TrimSuffix(symbol, ".NS")
+
+	url := fmt.Sprintf("https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=%s&apikey=%s",
+		cleanSymbol, apiKey)
+
+	resp, err := r.httpClient.Get(url) // #nosec G107 G704
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	var data map[string]interface{}
+	if err := json.Unmarshal(body, &data); err != nil {
+		return 0, err
+	}
+
+	quote, ok := data["Global Quote"].(map[string]interface{})
+	if !ok || len(quote) == 0 {
+		return 0, fmt.Errorf("no quote data")
+	}
+
+	priceStr, ok := quote["05. price"].(string)
+	if !ok {
+		return 0, fmt.Errorf("no price field")
+	}
+
+	price := 0.0
+	fmt.Sscanf(priceStr, "%f", &price)
+
+	if price == 0 {
+		return 0, fmt.Errorf("invalid price")
+	}
+
+	return price, nil
 }
