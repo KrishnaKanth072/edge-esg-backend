@@ -1,0 +1,46 @@
+name: On Push Quality Checks
+
+on:
+  push:
+    branches: ['**']  # Run on ALL branches
+
+jobs:
+  quick-checks:
+    name: Quick Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+      
+      - name: Download dependencies
+        run: go mod download
+      
+      - name: Run golangci-lint (fail on errors)
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --timeout=5m
+      
+      - name: Go vet
+        run: go vet ./...
+      
+      - name: Check formatting
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "❌ Go files are not formatted. Run: gofmt -w ."
+            gofmt -l .
+            exit 1
+          fi
+          echo "✅ All Go files are properly formatted"
+      
+      - name: Summary
+        if: success()
+        run: |
+          echo "✅ All quality checks passed!"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
