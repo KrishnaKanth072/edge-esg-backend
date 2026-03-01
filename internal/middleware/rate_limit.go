@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/edgeesg/edge-esg-backend/internal/error_codes"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"github.com/edgeesg/edge-esg-backend/internal/error_codes"
 )
 
 type RateLimiter struct {

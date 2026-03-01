@@ -10,12 +10,7 @@ import (
 )
 
 type Orchestrator struct {
-	riskClient       RiskAgentClient
-	tradingClient    TradingAgentClient
-	quantumClient    QuantumAgentClient
-	complianceClient ComplianceAgentClient
-	consensusClient  ConsensusAgentClient
-	blockchainClient BlockchainAgentClient
+	// Client fields will be added when gRPC connections are implemented
 }
 
 func NewOrchestrator() *Orchestrator {
@@ -142,6 +137,8 @@ type ConsensusResult struct {
 	Decision     string
 }
 
+// Client interfaces for future gRPC implementation
+// These will be used when connecting to actual microservices
 type RiskAgentClient interface{}
 type TradingAgentClient interface{}
 type QuantumAgentClient interface{}

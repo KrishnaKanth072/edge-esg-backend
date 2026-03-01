@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/edgeesg/edge-esg-backend/internal/error_codes"
+	"github.com/gin-gonic/gin"
 )
 
 var (
